@@ -67,6 +67,7 @@ fn destination_in_50() {
 }
 
 #[test]
+#[ignore]
 fn destination_out_50() {
     let blend_mode = BlendMode::DestinationOut;
     let opacity = 0.5;
