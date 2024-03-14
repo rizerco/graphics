@@ -34,6 +34,20 @@ impl Color {
         }
     }
 
+    /// Creates a new colour from a hex value in the RGB format.
+    pub fn from_rgb_u32_and_alpha(value: u32, alpha: f32) -> Color {
+        let red = (value & 0xff0000) >> 16;
+        let green = (value & 0x00ff00) >> 8;
+        let blue = value & 0x0000ff;
+        let alpha = (alpha * u8::MAX as f32).round() as u8;
+        Color {
+            red: red.try_into().unwrap(),
+            green: green.try_into().unwrap(),
+            blue: blue.try_into().unwrap(),
+            alpha,
+        }
+    }
+
     /// Creates a new colour from a hex value in the RGBA format.
     pub fn from_rgba_u32(value: u32) -> Color {
         let red = (value & 0xff000000) >> 24;
