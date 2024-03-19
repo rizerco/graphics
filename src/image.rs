@@ -106,7 +106,10 @@ impl Image {
     }
 
     /// Saves the image to a file.
-    pub fn save(&self, path: &str) -> anyhow::Result<()> {
+    pub fn save<P>(&self, path: P) -> anyhow::Result<()>
+    where
+        P: AsRef<Path>,
+    {
         let size = self.size;
         let data = self.data.clone();
         let output_buffer: image::RgbaImage =
