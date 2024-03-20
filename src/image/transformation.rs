@@ -47,6 +47,19 @@ impl Image {
         }
     }
 
+    /// Scales up the image by an integer multiple. Each pixel is translated
+    /// into an n x n square of pixels, where n is the scale value, all having
+    /// the same colour.
+    pub fn scaled_up(&self, scale: u32) -> Image {
+        let new_size = Size {
+            width: self.size.width * scale,
+            height: self.size.height * scale,
+        };
+        let mut new_image = self.clone();
+        new_image.resize_nearest_neighbor(new_size);
+        new_image
+    }
+
     /// Resizes an image using the nearest neighbour algorithm.
     pub fn resize_nearest_neighbor(&mut self, new_size: Size<u32>) {
         let mut new_image = Image::empty(new_size);

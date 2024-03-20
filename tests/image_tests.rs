@@ -180,6 +180,22 @@ mod tests {
     }
 
     #[test]
+    fn scaled_up() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("tests/images/avatar.png");
+        let image = Image::open(path).unwrap();
+
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("tests/images/avatar-scaled-3x.png");
+        let expected_image = Image::open(path).unwrap();
+
+        let image = image.scaled_up(3);
+
+        image.save("/tmp/avatar-scaled-3x.png").unwrap();
+        assert!(image.appears_equal_to(&expected_image));
+    }
+
+    #[test]
     fn test_resized() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("tests/images/avatar.png");
