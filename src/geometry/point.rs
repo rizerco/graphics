@@ -75,6 +75,15 @@ impl From<Point<u32>> for Point<f32> {
     }
 }
 
+impl From<Point<f32>> for Point<i16> {
+    fn from(value: Point<f32>) -> Self {
+        Self {
+            x: value.x as i16,
+            y: value.y as i16,
+        }
+    }
+}
+
 impl From<Point<f32>> for Point<u32> {
     fn from(value: Point<f32>) -> Self {
         Self {
