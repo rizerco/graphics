@@ -1,7 +1,7 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum BlendMode {
     /// Adds color components to achieve a brightening effect.
@@ -166,5 +166,15 @@ impl<'de> Deserialize<'de> for BlendMode {
         Self::from_str(key).ok_or(serde::de::Error::custom(
             "Unable to parse a valid blend mode.",
         ))
+    }
+}
+
+impl Serialize for BlendMode {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let string = self.as_str();
+        serializer.serialize_str(string)
     }
 }
