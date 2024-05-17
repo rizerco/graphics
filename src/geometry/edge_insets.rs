@@ -1,7 +1,7 @@
 use num_traits::{Float, Num, Zero};
 
 /// A set of offsets in each of the four cardinal directions.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct EdgeInsets<T: Num + Copy> {
     /// The top edge inset value.
     pub top: T,
