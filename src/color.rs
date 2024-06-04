@@ -103,7 +103,7 @@ impl Color {
     /// Returns the colour as a hex string.
     /// Discards any alpha value.
     pub fn as_hex(&self, include_octothorpe: bool) -> String {
-        let mut result = format!("{:x}", self.as_rgb_u32());
+        let mut result = format!("{:06x}", self.as_rgb_u32());
         if include_octothorpe {
             result.insert(0, '#');
         }
