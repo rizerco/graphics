@@ -322,8 +322,8 @@ fn background_with_opacity() {
     let color_image = Image::color(&Color::from_rgb_u32(0x99e550), image.size);
 
     let size = image.size;
-    let image_layer = Layer::new(image, Point::zero());
-    let mut color_layer = Layer::new(color_image, Point::zero());
+    let image_layer = Layer::new(&image, Point::zero());
+    let mut color_layer = Layer::new(&color_image, Point::zero());
     color_layer.blend_mode = BlendMode::ColorBurn;
 
     let layers = vec![image_layer, color_layer];
@@ -374,7 +374,7 @@ fn single_semitransparent_image() {
     };
     let color = Color::from_rgb_u32(0x5fcde4);
     let image = Image::color(&color, size);
-    let mut layer = Layer::new(image, Point::zero());
+    let mut layer = Layer::new(&image, Point::zero());
     layer.opacity = 0.5;
 
     let expected_bytes = vec![0x5f, 0xcd, 0xe4, 0x80];
@@ -392,10 +392,10 @@ fn transparent_base_with_semitransparent_blend() {
         height: 1,
     };
     let base_image = Image::empty(size);
-    let base_layer = Layer::new(base_image, Point::zero());
+    let base_layer = Layer::new(&base_image, Point::zero());
     let color = Color::from_rgb_u32(0x5fcde4);
     let image = Image::color(&color, size);
-    let mut blend_layer = Layer::new(image, Point::zero());
+    let mut blend_layer = Layer::new(&image, Point::zero());
     blend_layer.opacity = 0.5;
 
     let expected_bytes = vec![0x5f, 0xcd, 0xe4, 0x80];
@@ -495,7 +495,7 @@ fn compositing_two_semitransparent_images() {
             height: 4,
         },
     );
-    let mut background = Layer::new(background, Point::zero());
+    let mut background = Layer::new(&background, Point::zero());
     background.opacity = 0.2;
 
     let blue_image = Image::color(
@@ -505,7 +505,7 @@ fn compositing_two_semitransparent_images() {
             height: 1,
         },
     );
-    let mut blue_layer = Layer::new(blue_image, Point { x: 1.0, y: 1.0 });
+    let mut blue_layer = Layer::new(&blue_image, Point { x: 1.0, y: 1.0 });
     blue_layer.opacity = 0.5;
 
     let canvas_size = Size {
@@ -581,10 +581,10 @@ fn run_blend_mode_test_with_position(
     let color_image = Image::color(&Color::from_rgb_u32(0x00f5ac), input_image.size);
 
     let size = Size { width, height };
-    let mut layer = Layer::new(input_image, base_position);
+    let mut layer = Layer::new(&input_image, base_position);
     layer.opacity = base_opacity;
 
-    let mut color_layer = Layer::new(color_image, blend_position);
+    let mut color_layer = Layer::new(&color_image, blend_position);
     color_layer.blend_mode = blend_mode;
     color_layer.opacity = blend_opacity;
 
@@ -616,7 +616,7 @@ fn test_compositing_with_offset() {
 
     let mut color_image = Image::color(&Color::from_rgb_u32(0xef5400), avatar.size);
 
-    let layer = Layer::new(avatar, Point { x: -5.0, y: -3.0 });
+    let layer = Layer::new(&avatar, Point { x: -5.0, y: -3.0 });
 
     composite::draw_layer_over_image(&mut color_image, &layer);
 

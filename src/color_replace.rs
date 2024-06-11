@@ -241,16 +241,16 @@ pub fn flood_fill_with_mask(
     if fill_color.alpha == 0 {
         // For a clear, erase the masked area,
         // then just draw the two images on top of each other.
-        let mut layer = Layer::new(mask.image().clone(), mask.bounding_box().origin.into());
+        let mut layer = Layer::new(&mask.image(), mask.bounding_box().origin.into());
         layer.blend_mode = BlendMode::DestinationOut;
         let mut image_with_mask_erased = image.clone();
         composite::draw_layer_over_image(&mut image_with_mask_erased, &layer);
-        let layer = Layer::new(image_with_mask_erased, Point::zero());
+        let layer = Layer::new(&image_with_mask_erased, Point::zero());
         composite::draw_layer_over_image(&mut result, &layer);
         *image = result;
     } else {
         let subimage = result.subimage_masked(mask)?;
-        let layer = Layer::new(subimage, mask.bounding_box().origin.into());
+        let layer = Layer::new(&subimage, mask.bounding_box().origin.into());
         composite::draw_layer_over_image(image, &layer);
     }
     Ok(affected_region)

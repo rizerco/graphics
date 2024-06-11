@@ -5,8 +5,8 @@ use crate::{
 
 /// Deletes the pixels in the image within the supplied mask image.
 pub fn delete_pixels(image: &mut Image, mask: &dyn Mask) {
-    let base_layer = Layer::new(image.clone(), Point::zero());
-    let mut blend_layer = Layer::new(mask.image().clone(), mask.bounding_box().origin.into());
+    let base_layer = Layer::new(image, Point::zero());
+    let mut blend_layer = Layer::new(mask.image(), mask.bounding_box().origin.into());
     blend_layer.blend_mode = BlendMode::DestinationOut;
 
     let operation = Operation::new(vec![base_layer, blend_layer], image.size);
@@ -16,8 +16,8 @@ pub fn delete_pixels(image: &mut Image, mask: &dyn Mask) {
 /// Returns the image that intersects the supplied mask.
 pub fn subimage(image: &Image, mask: &dyn Mask) -> Image {
     let base_origin = mask.bounding_box().origin * -1;
-    let base_layer = Layer::new(image.clone(), base_origin.into());
-    let mut blend_layer = Layer::new(mask.image().clone(), Point::zero());
+    let base_layer = Layer::new(image, base_origin.into());
+    let mut blend_layer = Layer::new(mask.image(), Point::zero());
     blend_layer.blend_mode = BlendMode::DestinationIn;
 
     let operation = Operation::new(

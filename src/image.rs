@@ -527,7 +527,7 @@ impl Image {
     pub fn subimage_masked(&self, mask: &dyn Mask) -> anyhow::Result<Image> {
         let mut result = self.clone();
         result.crop_with_offset(mask.bounding_box().size.into(), mask.bounding_box().origin)?;
-        let mut layer = Layer::new(mask.image().to_owned(), Point::zero());
+        let mut layer = Layer::new(mask.image(), Point::zero());
         layer.blend_mode = BlendMode::DestinationIn;
         composite::draw_layer_over_image(&mut result, &layer);
         Ok(result)

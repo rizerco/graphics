@@ -84,6 +84,7 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
                 layer.blend_mode,
                 layer.opacity,
             );
+            // let base_color = Color::RED;
 
             image.data[target_offset + x + 0] = base_color.red;
             image.data[target_offset + x + 1] = base_color.green;
