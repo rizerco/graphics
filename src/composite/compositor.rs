@@ -2,11 +2,9 @@ use std::cmp::min;
 
 use crate::{BlendMode, Color, Image};
 
-use super::{
-    blend::{self, RgbaColor},
-    operation::Operation,
-    Layer,
-};
+use super::blend::{self, RgbaColor};
+use super::operation::Operation;
+use super::{Either, Layer};
 
 /// Composites multiple images together and returns the result.
 pub fn composite(operation: &Operation) -> Image {
@@ -26,7 +24,17 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
     if start_x >= image.size.width {
         return;
     }
-    let end_x = layer.image.size.width as i32 + location.x;
+
+    let layer_size = match &layer.image {
+        Either::Owned(image) => image.size,
+        Either::Borrowed(image) => image.size,
+    };
+    let layer_bytes_per_row = match &layer.image {
+        Either::Owned(image) => image.bytes_per_row,
+        Either::Borrowed(image) => image.bytes_per_row,
+    };
+
+    let end_x = layer_size.width as i32 + location.x;
     if end_x <= 0 {
         return;
     }
@@ -38,7 +46,7 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
     if start_y >= image.size.height {
         return;
     }
-    let end_y = layer.image.size.height as i32 + location.y;
+    let end_y = layer_size.height as i32 + location.y;
     if end_y <= 0 {
         return;
     }
@@ -63,14 +71,24 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
     // I tried using rayon for this, but with 10,000 rows the performance
     // was a little worse with rayon than without.
     for y in 0..required_height {
-        let offset = ((y + y_offset) * layer.image.bytes_per_row) as usize; //+ y_offset;
+        let offset = ((y + y_offset) * layer_bytes_per_row) as usize; //+ y_offset;
         let target_offset = ((target_y_offset + y) * image.bytes_per_row) as i32;
         let target_offset = (target_offset + (start_x as i32) * 4) as usize;
         // Using a second loop was a tiny bit faster than splicing the vec.
         for x in (0..required_width * 4).step_by(4) {
             let start = offset + x + x_offset;
-            let data = layer.image.data.get(start..(start + 4)).unwrap();
-            let blend_color: [u8; 4] = data.try_into().unwrap();
+            let blend_color: [u8; 4] = match &layer.image {
+                Either::Owned(image) => {
+                    let data = image.data.get(start..(start + 4)).unwrap();
+                    let color: [u8; 4] = data.try_into().unwrap();
+                    color
+                }
+                Either::Borrowed(image) => {
+                    let data = image.data.get(start..(start + 4)).unwrap();
+                    let color: [u8; 4] = data.try_into().unwrap();
+                    color
+                }
+            };
             let blend_color: Color = blend_color.into();
 
             let start = target_offset + x;
