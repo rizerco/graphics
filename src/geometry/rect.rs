@@ -324,6 +324,15 @@ impl From<Rect<i32>> for Rect<f32> {
     }
 }
 
+impl From<Rect<u32>> for Rect<i32> {
+    fn from(value: Rect<u32>) -> Self {
+        Self {
+            origin: value.origin.into(),
+            size: value.size.into(),
+        }
+    }
+}
+
 impl From<Rect<u32>> for Rect<f32> {
     fn from(value: Rect<u32>) -> Self {
         Self {
