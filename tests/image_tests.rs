@@ -79,19 +79,22 @@ mod tests {
         path.push("tests/images/avatar.png");
         let original_image = Image::open(path).unwrap();
 
-        let color_image = Image::color(
+        let mut color_image = Image::color(
             &Color::from_rgb_u32(0x00eba6),
             Size {
                 width: 12,
                 height: 7,
             },
         );
+        // Set the colour of the second pixel to yellow.
+        color_image.data[4] = 0xd6;
+        color_image.data[6] = 0x00;
 
         // Test when the image goes off the canvas on the bottom right.
         let mut image = original_image.clone();
         let location = Point { x: 15, y: 18 };
         image.draw_image_over(&color_image, location);
-        // image.save("/tmp/drawn-over(15,18).png").unwrap();
+        image.save("/tmp/drawn-over(15,18).png").unwrap();
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("tests/images/drawn-over(15,18).png");
         let expected_image = Image::open(path).unwrap();
@@ -101,7 +104,7 @@ mod tests {
         let mut image = original_image.clone();
         let location = Point { x: -3, y: -2 };
         image.draw_image_over(&color_image, location);
-        // image.save("/tmp/drawn-over(-3,-2).png").unwrap();
+        image.save("/tmp/drawn-over(-3,-2).png").unwrap();
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("tests/images/drawn-over(-3,-2).png");
         let expected_image = Image::open(path).unwrap();
