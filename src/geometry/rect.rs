@@ -419,6 +419,11 @@ where
         result
     }
 
+    /// Returns whether or not one rectangle intersects another.
+    pub fn intersects(&self, other: &Rect<T>) -> bool {
+        self.intersection(other).is_some()
+    }
+
     /// Returns the rectangle that is the interection of this and another rectangle.
     pub fn intersection(&self, other: &Rect<T>) -> Option<Rect<T>> {
         let min_x = std::cmp::max(self.min_x(), other.min_x());
