@@ -90,6 +90,14 @@ mod tests {
         color_image.data[4] = 0xd6;
         color_image.data[6] = 0x00;
 
+        // Set the colour of the middle pixels to yellow.
+        let offset = (12 * 3 + 5) * 4;
+        color_image.data[offset] = 0xd6;
+        color_image.data[offset + 2] = 0x00;
+        let offset = (12 * 3 + 6) * 4;
+        color_image.data[offset] = 0xd6;
+        color_image.data[offset + 2] = 0x00;
+
         // Test when the image goes off the canvas on the bottom right.
         let mut image = original_image.clone();
         let location = Point { x: 15, y: 18 };

@@ -512,7 +512,14 @@ impl Image {
         // I tried using rayon for this, but with 10,000 rows the performance
         // was a little worse with rayon than without.
         for y in 0..required_height {
-            let offset = (y * other_image.bytes_per_row) as usize;
+            let overlay_y = if location.y < 0 {
+                y as i32 - location.y
+            } else {
+                y as i32
+            };
+            let overlay_x = if location.x < 0 { -location.x } else { 0 };
+            let offset = (overlay_y as u32 * other_image.bytes_per_row) as i32;
+            let offset = (offset + overlay_x * 4) as usize;
             let target_offset = ((target_y_offset + y) * self.bytes_per_row) as i32;
             let target_offset = (target_offset + (start_x as i32) * 4) as usize;
             // Using a second loop was a tiny bit faster than splicing the vec.
