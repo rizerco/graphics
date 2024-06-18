@@ -442,6 +442,19 @@ where
         Some(result)
     }
 
+    /// Returns the rectangle that fully encloses this and another rectangle.
+    pub fn union(&self, other: &Rect<T>) -> Rect<T> {
+        let min_x = std::cmp::min(self.min_x(), other.min_x());
+        let max_x = std::cmp::max(self.max_x(), other.max_x());
+        let min_y = std::cmp::min(self.min_y(), other.min_y());
+        let max_y = std::cmp::max(self.max_y(), other.max_y());
+
+        let width = max_x - min_x;
+        let height = max_y - min_y;
+
+        Rect::new(min_x, min_y, width, height)
+    }
+
     /// Returns a copy of the rect locked to a 1:1 aspect ratio.
     pub fn aspect_locked(&self) -> Self {
         // Work out the smallest dimension and use that for the magnitude
@@ -593,6 +606,17 @@ mod tests {
         assert_eq!(rect_c.intersection(&rect_a), None);
 
         assert_eq!(rect_a.intersection(&rect_a), Some(rect_a));
+    }
+
+    #[test]
+    fn test_union() {
+        let rect_a = Rect::new(0, 0, 6, 6);
+        let rect_b = Rect::new(3, 12, 5, 3);
+        let expected = Rect::new(0, 0, 8, 15);
+
+        assert_eq!(rect_a.union(&rect_b), expected);
+
+        assert_eq!(rect_a.union(&rect_a), rect_a);
     }
 
     #[test]
