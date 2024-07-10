@@ -1,9 +1,15 @@
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
+    use std::{
+        fs::File,
+        io::{Cursor, Read, Write},
+        path::PathBuf,
+    };
 
+    use flate2::{bufread::ZlibDecoder, write::ZlibEncoder, Compression};
     use graphics::{Color, Image, Point, Rect, Size};
-    use image::ImageFormat;
+    use image::{ColorType, ImageFormat};
+    use tiff::encoder::{colortype::RGBA8, compression::Lzw, *};
 
     #[test]
     fn test_file_data() {
@@ -16,6 +22,98 @@ mod tests {
         let image_from_file = Image::from_file_data(png_data.as_slice()).unwrap();
 
         assert!(image.appears_equal_to(&image_from_file));
+    }
+
+    #[test]
+    fn test_tiff() {
+        //TODO test zlib
+
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("tests/images/mountain.png");
+        let image = Image::open(path).unwrap();
+
+        let now = std::time::Instant::now();
+        let png_data = image.file_data(ImageFormat::Png).unwrap();
+        std::fs::write("/tmp/0_png.png", png_data).unwrap();
+        println!("encode png: {:.2?}", now.elapsed());
+        let now = std::time::Instant::now();
+        _ = Image::open("/tmp/0_png.png").unwrap();
+        println!("decode png: {:.2?}", now.elapsed());
+
+        let now = std::time::Instant::now();
+        let mut file = File::create("/tmp/0_lzw.tiff").unwrap();
+        let mut tiff = TiffEncoder::new(&mut file).unwrap();
+        tiff.write_image_with_compression::<RGBA8, _>(
+            image.size.width,
+            image.size.height,
+            compression::Lzw,
+            &image.data,
+        )
+        .unwrap();
+        println!("encode lzw: {:.2?}", now.elapsed());
+        let now = std::time::Instant::now();
+        _ = Image::open("/tmp/0_lzw.tiff").unwrap();
+        println!("decode lzw: {:.2?}", now.elapsed());
+
+        let now = std::time::Instant::now();
+        let mut file = File::create("/tmp/0_unc.tiff").unwrap();
+        let mut tiff = TiffEncoder::new(&mut file).unwrap();
+        tiff.write_image_with_compression::<RGBA8, _>(
+            image.size.width,
+            image.size.height,
+            compression::Uncompressed,
+            &image.data,
+        )
+        .unwrap();
+        println!("encode unc: {:.2?}", now.elapsed());
+        let now = std::time::Instant::now();
+        _ = Image::open("/tmp/0_unc.tiff").unwrap();
+        println!("decode unc: {:.2?}", now.elapsed());
+
+        let now = std::time::Instant::now();
+        let mut file = File::create("/tmp/0_pac.tiff").unwrap();
+        let mut tiff = TiffEncoder::new(&mut file).unwrap();
+        tiff.write_image_with_compression::<RGBA8, _>(
+            image.size.width,
+            image.size.height,
+            compression::Packbits,
+            &image.data,
+        )
+        .unwrap();
+        println!("encode pac: {:.2?}", now.elapsed());
+        let now = std::time::Instant::now();
+        _ = Image::open("/tmp/0_pac.tiff").unwrap();
+        println!("decode pac: {:.2?}", now.elapsed());
+
+        let now = std::time::Instant::now();
+        let mut encoder = ZlibEncoder::new(Vec::new(), Compression::fast());
+        encoder.write_all(&image.data).unwrap();
+        let encoded_data = encoder.finish().unwrap();
+        std::fs::write("/tmp/0_zlib", &encoded_data).unwrap();
+        println!("encode zlb: {:.2?}", now.elapsed());
+
+        let now = std::time::Instant::now();
+        let cursor = Cursor::new(encoded_data);
+        let mut decoder = ZlibDecoder::new(cursor);
+        let mut decompressed_data = Vec::new();
+        // Ignoring the result because sometimes the
+        // data does not have the checksum, which will
+        // produce an error. This actually happens with
+        // files created by Pixaki 4 — whoops!
+        let _ = decoder.read_to_end(&mut decompressed_data);
+        // let mut decoder = ZlibDecoder::new();
+        // let now = std::time::Instant::now();
+        // _ = Image::open("/tmp/0_zlib").unwrap();
+        println!("decode zlb: {:.2?}", now.elapsed());
+
+        let image = Image {
+            data: decompressed_data,
+            size: image.size,
+            bytes_per_row: image.bytes_per_row,
+        };
+        image.save("/tmp/*output.png").unwrap();
+
+        panic!()
     }
 
     #[test]

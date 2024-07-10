@@ -2,6 +2,8 @@ mod mask_operations;
 pub mod transformation;
 
 pub use mask_operations::*;
+use tiff::encoder::compression::{self, Compression, CompressionAlgorithm};
+use tiff::encoder::{colortype, TiffEncoder};
 
 use std::cmp::min;
 use std::io::Cursor;
@@ -131,6 +133,26 @@ impl Image {
         let mut cursor = Cursor::new(&mut file_data);
         output_buffer.write_to(&mut cursor, format)?;
         Ok(file_data)
+    }
+
+    /// Outputs data for the image using the TIFF format.
+    /// This allows for the compression algorithm to be set.
+    pub fn tiff_data<D>(&self, compression: D) -> anyhow::Result<Vec<u8>>
+    where
+        D: Compression,
+    {
+        let mut buffer = Vec::new();
+        let mut cursor = Cursor::new(&mut buffer);
+
+        let mut tiff = TiffEncoder::new(&mut cursor)?;
+        tiff.write_image_with_compression::<colortype::RGBA8, _>(
+            self.size.width,
+            self.size.height,
+            compression,
+            &self.data,
+        )?;
+
+        Ok(buffer)
     }
 
     /// Outputs the data as an image buffer.

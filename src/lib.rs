@@ -5,6 +5,7 @@ pub mod composite;
 mod geometry;
 pub mod image;
 mod mask;
+pub mod tiff;
 
 pub use blend_mode::*;
 pub use color::*;
