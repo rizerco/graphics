@@ -11,6 +11,16 @@ pub struct Size<T: Num> {
     pub height: T,
 }
 
+impl<T: Num + Zero> Size<T> {
+    /// Creates a new point with 0 for the width and height.
+    pub fn zero() -> Size<T> {
+        return Self {
+            width: T::zero(),
+            height: T::zero(),
+        };
+    }
+}
+
 impl<T: Float> Size<T> {
     /// Returns the size rounded and as an integer type.
     pub fn rounded(&self) -> Size<i32> {

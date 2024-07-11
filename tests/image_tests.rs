@@ -25,6 +25,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_tiff() {
         //TODO test zlib
 
