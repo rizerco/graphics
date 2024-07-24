@@ -1,8 +1,9 @@
+pub mod cv;
 mod mask_operations;
 pub mod transformation;
 
 pub use mask_operations::*;
-use tiff::encoder::compression::{self, Compression, CompressionAlgorithm};
+use tiff::encoder::compression::Compression;
 use tiff::encoder::{colortype, TiffEncoder};
 
 use std::cmp::min;
