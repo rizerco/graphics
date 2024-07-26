@@ -1,6 +1,18 @@
 use crate::Image;
 
 impl Image {
+    /// Returns an image in the BGRA format specifically for use as
+    /// a pixel buffer.
+    pub fn pixel_buffer_image(&self) -> Image {
+        let bytes_per_row = self.pixel_buffer_bytes_per_row() as u32;
+        let data = self.pixel_buffer_data();
+        Image {
+            data,
+            size: self.size,
+            bytes_per_row,
+        }
+    }
+
     /// Returns the bytes per row that should be used for the pixel buffer.
     fn pixel_buffer_bytes_per_row(&self) -> usize {
         let alignment = 64;

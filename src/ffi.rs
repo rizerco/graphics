@@ -48,13 +48,12 @@ extern "C" {
     /// `kvImageInvalidParameter`          When permuteMap > 3, which is invalid.
     /// `kvImageRoiLargerThanInputBuffer`  The height and width of the destination must be less than or equal to the height and width of the src buffer, respectively.
     /// */
-    pub fn vImagePermuteChannels_ARGB8888(
+    pub(crate) fn vImagePermuteChannels_ARGB8888(
         src: *const vImage_Buffer<*const u8>,
         dest: *mut vImage_Buffer<*mut u8>,
         permuteMap: *const u8,
         flags: vImage_Flags,
     ) -> vImage_Error;
-
 }
 
 pub type vImagePixelCount = c_ulong;
