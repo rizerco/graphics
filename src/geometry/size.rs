@@ -150,6 +150,24 @@ impl From<Size<f32>> for Size<u32> {
     }
 }
 
+impl From<Size<f32>> for Size<f64> {
+    fn from(value: Size<f32>) -> Self {
+        Self {
+            width: value.width as f64,
+            height: value.height as f64,
+        }
+    }
+}
+
+impl From<Size<f64>> for Size<f32> {
+    fn from(value: Size<f64>) -> Self {
+        Self {
+            width: value.width as f32,
+            height: value.height as f32,
+        }
+    }
+}
+
 impl From<Size<i32>> for Size<u32> {
     fn from(value: Size<i32>) -> Self {
         let mut width = value.width;
