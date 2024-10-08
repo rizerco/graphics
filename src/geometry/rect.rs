@@ -408,6 +408,20 @@ where
             && point.y <= self.max_y()
     }
 
+    /// Returns whether or not another rectangle is fully contained inside
+    /// this one.
+    pub fn contains_rect(&self, other: &Rect<T>) -> bool {
+        let min_point = Point {
+            x: other.min_x(),
+            y: other.min_y(),
+        };
+        let max_point = Point {
+            x: other.max_x(),
+            y: other.max_y(),
+        };
+        self.contains(min_point) && self.contains(max_point)
+    }
+
     /// Returns the frame inset by the edge insets.
     pub fn inset(&self, insets: &EdgeInsets<T>) -> Self {
         let x = self.origin.x + insets.left;

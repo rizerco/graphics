@@ -51,6 +51,9 @@ pub enum BlendMode {
     DestinationIn = 20,
     /// Destination is placed, where it falls outside of the source.
     DestinationOut = 21,
+    /// Replace all the pixels on the base layer with the blend layer within
+    /// the bounds of the blend layer.
+    Replace = 101,
 }
 
 impl BlendMode {
@@ -79,6 +82,7 @@ impl BlendMode {
             19 => Some(BlendMode::PassThrough),
             20 => Some(BlendMode::DestinationIn),
             21 => Some(BlendMode::DestinationOut),
+            101 => Some(BlendMode::Replace),
             _ => None,
         }
     }
@@ -110,6 +114,7 @@ impl BlendMode {
             BlendMode::Screen => "screen",
             BlendMode::SoftLight => "soft-light",
             BlendMode::Subtract => "subtract",
+            BlendMode::Replace => "replace",
         }
     }
 }
@@ -139,6 +144,7 @@ impl BlendMode {
             "screen" => Some(Self::Screen),
             "softLight" | "soft_light" | "soft-light" => Some(Self::SoftLight),
             "subtract" => Some(Self::Subtract),
+            "replace" => Some(Self::Replace),
             _ => None,
         }
     }

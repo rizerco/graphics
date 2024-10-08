@@ -147,11 +147,19 @@ fn blend_colors(color: &mut Color, blend_color: &Color, blend_mode: BlendMode, o
         BlendMode::Screen => blend::screen(&mut base_rgb, &blend_rgb),
         BlendMode::SoftLight => blend::soft_light(&mut base_rgb, &blend_rgb),
         BlendMode::Subtract => blend::subtract(&mut base_rgb, &blend_rgb),
+        BlendMode::Replace => {
+            let alpha = (opacity * blend_color.alpha as f32).round() as u8;
+            color.red = blend_color.red;
+            color.green = blend_color.green;
+            color.blue = blend_color.blue;
+            color.alpha = alpha;
+            return;
+        }
     }
 
     let mut output: RgbaColor;
 
-    if blend_mode.is_porter_duff() {
+    if blend_mode.is_porter_duff() || blend_mode == BlendMode::Replace {
         output = base_rgba;
     } else {
         // Very useful documentation on this at https://drafts.fxtf.org/compositing-1

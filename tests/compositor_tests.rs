@@ -271,6 +271,20 @@ fn subtract_compositing_50() {
 }
 
 #[test]
+fn replace_compositing() {
+    let blend_mode = BlendMode::Replace;
+    let opacity = 1.0;
+    run_offset_blend_mode_test(blend_mode, opacity);
+}
+
+#[test]
+fn replace_compositing_50() {
+    let blend_mode = BlendMode::Replace;
+    let opacity = 0.5;
+    run_offset_blend_mode_test(blend_mode, opacity);
+}
+
+#[test]
 fn offset_normal() {
     let blend_mode = BlendMode::Normal;
     run_offset_blend_mode_test(blend_mode, 1.0);
