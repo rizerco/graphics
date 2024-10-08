@@ -566,8 +566,20 @@ impl Image {
     /// Returns a new image that is a subimage of this image within
     /// the supplied bounds.
     pub fn subimage(&self, region: Rect<i32>) -> anyhow::Result<Image> {
-        let mut result = self.clone();
-        result.crop_with_offset(region.size.into(), region.origin)?;
+        let mut result = Image::empty(region.size.into());
+        for y in 0..region.size.height {
+            for x in 0..region.size.width {
+                let point = Point {
+                    x: region.origin.x + x,
+                    y: region.origin.y + y,
+                };
+                let Some(color) = self.pixel_color(point) else {
+                    continue;
+                };
+                let point = Point { x, y }.into();
+                result.set_pixel_color(color, point);
+            }
+        }
         Ok(result)
     }
 }
