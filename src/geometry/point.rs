@@ -241,6 +241,13 @@ where
         };
         rotated_point + point
     }
+
+    /// Returns the distance between this point and another.
+    pub fn distance_to(&self, point: &Point<T>) -> T {
+        let x = self.x - point.x;
+        let y = self.y - point.y;
+        T::sqrt(x * x + y * y)
+    }
 }
 
 // SERIALISATION
@@ -271,5 +278,13 @@ mod tests {
         let result = point.rotated(angle, Point::zero());
         let expected_result = Point { x: 3.0, y: -13.0 };
         assert_eq!(result, expected_result);
+    }
+
+    #[test]
+    fn test_distance_to() {
+        let point_a = Point { x: 13.0, y: 7.0 };
+        let point_b = Point { x: 10.0, y: 11.0 };
+        let distance = point_a.distance_to(&point_b);
+        assert_eq!(distance, 5.0);
     }
 }
