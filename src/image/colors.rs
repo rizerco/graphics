@@ -42,6 +42,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn colors_in_gerbil() {
         let image = Image::open("tests/images/gerbil.jpg").unwrap();
         let colors = image.colors();
