@@ -1,7 +1,3 @@
-pub mod cv;
-mod mask_operations;
-pub mod transformation;
-
 pub use mask_operations::*;
 use tiff::encoder::compression::Compression;
 use tiff::encoder::{colortype, TiffEncoder};
@@ -14,6 +10,11 @@ use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use crate::composite::{self, Layer};
 use crate::{BlendMode, Color, Mask, Point, Rect, Size};
+
+mod colors;
+pub mod cv;
+mod mask_operations;
+pub mod transformation;
 
 /// The representation of an image for graphics manipulation.
 #[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
