@@ -1,15 +1,13 @@
 #[cfg(test)]
 mod tests {
-    use std::{
-        fs::File,
-        io::{Cursor, Read, Write},
-        path::PathBuf,
-    };
+    use std::fs::File;
+    use std::io::{Cursor, Read, Write};
+    use std::path::PathBuf;
 
     use flate2::{bufread::ZlibDecoder, write::ZlibEncoder, Compression};
     use graphics::{Color, Image, Point, Rect, Size};
-    use image::{ColorType, ImageFormat};
-    use tiff::encoder::{colortype::RGBA8, compression::Lzw, *};
+    use image::ImageFormat;
+    use tiff::encoder::{colortype::RGBA8, *};
 
     #[test]
     fn test_file_data() {
@@ -380,5 +378,17 @@ mod tests {
 
         image.save("/tmp/3x2-rotated.png").unwrap();
         assert!(image.appears_equal_to(&expected_image));
+    }
+
+    #[test]
+    fn fix_orientation() {
+        let path = PathBuf::from("tests/images/orientation/f1t.jpg");
+        let base_image = Image::open(path).unwrap();
+
+        for index in 1..=8 {
+            let path = format!("tests/images/orientation/f{:}t.jpg", index);
+            let image = Image::open(path).unwrap();
+            assert!(image.appears_equal_to(&base_image));
+        }
     }
 }

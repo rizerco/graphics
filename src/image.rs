@@ -1,3 +1,4 @@
+use exif::{In, Tag};
 pub use mask_operations::*;
 use tiff::encoder::compression::Compression;
 use tiff::encoder::{colortype, TiffEncoder};
@@ -14,6 +15,7 @@ use crate::{BlendMode, Color, Mask, Point, Rect, Size};
 mod colors;
 pub mod cv;
 mod mask_operations;
+mod orientation;
 pub mod transformation;
 
 /// The representation of an image for graphics manipulation.
@@ -69,8 +71,10 @@ impl Image {
 impl Image {
     /// Creates a new image from file data.
     pub fn from_file_data(data: &[u8]) -> anyhow::Result<Self> {
-        let dyanic_image = image::load_from_memory(data)?;
-        Self::from_dynamic_image(dyanic_image)
+        let dynamic_image = image::load_from_memory(data)?;
+        let exif_reader = exif::Reader::new();
+        let exif = exif_reader.read_raw(data.to_vec()).ok();
+        Self::from_dynamic_image(dynamic_image, exif)
     }
 
     /// Opens an image file.
@@ -78,8 +82,12 @@ impl Image {
     where
         P: AsRef<Path>,
     {
-        let dynamic_image = image::open(path)?;
-        Self::from_dynamic_image(dynamic_image)
+        let dynamic_image = image::open(&path)?;
+        let file = std::fs::File::open(path)?;
+        let mut buf_reader = std::io::BufReader::new(&file);
+        let exif_reader = exif::Reader::new();
+        let exif = exif_reader.read_from_container(&mut buf_reader).ok();
+        Self::from_dynamic_image(dynamic_image, exif)
     }
 
     /// Creates a new image from an RgbaImage.
@@ -104,8 +112,18 @@ impl Image {
     }
 
     /// Creates a new image from a DynamicImage.
-    fn from_dynamic_image(dynamic_image: DynamicImage) -> anyhow::Result<Self> {
-        let input_image = dynamic_image.to_rgba8();
+    fn from_dynamic_image(
+        dynamic_image: DynamicImage,
+        exif: Option<exif::Exif>,
+    ) -> anyhow::Result<Self> {
+        let mut input_image = dynamic_image.to_rgba8();
+        if let Some(orientation) = exif
+            .as_ref()
+            .and_then(|exif| exif.get_field(Tag::Orientation, In::PRIMARY))
+            .and_then(|field| field.value.get_uint(0))
+        {
+            orientation::fix_orientation(&mut input_image, orientation);
+        }
         Self::from_rgba_image(input_image)
     }
 
