@@ -11,8 +11,10 @@ use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use crate::composite::{self, Layer};
 use crate::{BlendMode, Color, Mask, Point, Rect, Size};
+pub use constraints::ImageConstraints;
 
 mod colors;
+mod constraints;
 pub mod cv;
 mod mask_operations;
 mod orientation;
