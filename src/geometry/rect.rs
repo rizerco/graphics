@@ -301,6 +301,18 @@ impl<T: Float> Rect<T> {
             size: self.size.rounded(),
         }
     }
+
+    /// Centres the rect in a containing size.
+    pub fn center_in(&mut self, size: Size<T>, should_round: bool) {
+        let half = T::one() / (T::one() + T::one());
+        self.origin.x = size.width * half - self.size.width * half;
+        self.origin.y = size.height * half - self.size.height * half;
+
+        if should_round {
+            self.origin.x.floor();
+            self.origin.y.floor();
+        }
+    }
 }
 
 impl<T: Num + Zero> Rect<T> {
@@ -562,6 +574,18 @@ mod tests {
         let expected = Rect::new(4, 4, -4, -3);
         let result: Rect<i32> = Rect::containing_rounded(&point_b, &point_a);
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn center_in() {
+        let mut rect = Rect::new(0.0, 0.0, 15.0, 12.0);
+        let size = Size {
+            width: 20.0,
+            height: 20.0,
+        };
+        rect.center_in(size, false);
+
+        assert_eq!(rect, Rect::new(2.5, 4.0, 15.0, 12.0));
     }
 
     #[test]

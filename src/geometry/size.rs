@@ -1,6 +1,6 @@
 use core::ops::Add;
 use num_traits::{Float, Num, One, Zero};
-use std::ops::Mul;
+use std::{cmp, ops::Mul};
 
 #[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize, serde::Serialize)]
 /// Represents a size.
@@ -27,6 +27,26 @@ impl<T: Float> Size<T> {
         Size {
             width: self.width.round().to_i32().unwrap(),
             height: self.height.round().to_i32().unwrap(),
+        }
+    }
+
+    /// Returns the size constrained to the aspect ratio
+    /// matching the given size. The size will be reduced
+    /// in one dimension in order to fit the constraints.
+    pub fn constrained_to_match_aspect_ratio(&self, size: Size<T>, should_round: bool) -> Size<T> {
+        let ratio = size.width / size.height;
+
+        let mut min_width = T::min(self.width, self.height * ratio);
+        let mut min_height = T::min(self.height, self.width / ratio);
+
+        if should_round {
+            min_width = min_width.round();
+            min_height = min_height.round();
+        }
+
+        Size {
+            width: min_width,
+            height: min_height,
         }
     }
 }
@@ -226,5 +246,32 @@ where
     pub fn to_json_array(&self) -> Result<String, serde_json::Error> {
         let array = self.to_array();
         serde_json::to_string(&array)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn constrained_to_match_aspect_ratio() {
+        let ar_size = Size {
+            width: 16.0,
+            height: 9.0,
+        };
+        let size = Size {
+            width: 320.0,
+            height: 320.0,
+        };
+
+        let result = size.constrained_to_match_aspect_ratio(ar_size, false);
+
+        assert_eq!(
+            result,
+            Size {
+                width: 320.0,
+                height: 180.0
+            }
+        );
     }
 }
