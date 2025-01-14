@@ -642,3 +642,27 @@ fn test_compositing_with_offset() {
 
     assert!(color_image.appears_equal_to(&expected_image));
 }
+
+#[test]
+fn composite_resized_image() {
+    let mut image = Image::color(
+        &Color::from_rgb_u32(0xa2d5ff),
+        Size {
+            width: 88,
+            height: 80,
+        },
+    );
+    let gerbil = Image::open("tests/images/gerbil.jpg").unwrap();
+    let mut layer = Layer::new(&gerbil, Point { x: 6.5, y: 12.3 });
+    layer.size_on_canvas = Size {
+        width: 74.5,
+        height: 52.8,
+    };
+
+    composite::draw_layer_over_image(&mut image, &layer);
+
+    // image.save("/tmp/composite-resized.png").unwrap();
+
+    let expected_image = Image::open("tests/images/composite-resized.png").unwrap();
+    assert!(image.appears_equal_to(&expected_image));
+}
