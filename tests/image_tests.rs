@@ -6,7 +6,8 @@ mod tests {
 
     use flate2::{bufread::ZlibDecoder, write::ZlibEncoder, Compression};
     use graphics::{Color, Image, Point, Rect, Size};
-    use image::ImageFormat;
+    use image::codecs::png::{self, PngEncoder};
+    use image::{ImageEncoder, ImageFormat};
     use tiff::encoder::{colortype::RGBA8, *};
 
     #[test]
@@ -24,12 +25,11 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn test_tiff() {
-        //TODO test zlib
-
+    fn performance_tests() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("tests/images/mountain.png");
         let image = Image::open(path).unwrap();
+        let image = image.scaled_up(8);
 
         let now = std::time::Instant::now();
         let png_data = image.file_data(ImageFormat::Png).unwrap();
@@ -38,6 +38,28 @@ mod tests {
         let now = std::time::Instant::now();
         _ = Image::open("/tmp/0_png.png").unwrap();
         println!("decode png: {:.2?}", now.elapsed());
+
+        let now = std::time::Instant::now();
+        let mut png_data = Vec::new();
+        let encoder = PngEncoder::new_with_quality(
+            &mut png_data,
+            png::CompressionType::Fast,
+            png::FilterType::NoFilter,
+        );
+        encoder
+            .write_image(
+                &image.data,
+                image.size.width,
+                image.size.height,
+                image::ColorType::Rgba8,
+            )
+            .unwrap();
+        // let png_data = image.file_data(ImageFormat::Png).unwrap();
+        std::fs::write("/tmp/0_fast_png.png", png_data).unwrap();
+        println!("encode fpn: {:.2?}", now.elapsed());
+        let now = std::time::Instant::now();
+        _ = Image::open("/tmp/0_fast_png.png").unwrap();
+        println!("decode fpn: {:.2?}", now.elapsed());
 
         let now = std::time::Instant::now();
         let mut file = File::create("/tmp/0_lzw.tiff").unwrap();
@@ -85,32 +107,13 @@ mod tests {
         println!("decode pac: {:.2?}", now.elapsed());
 
         let now = std::time::Instant::now();
-        let mut encoder = ZlibEncoder::new(Vec::new(), Compression::fast());
-        encoder.write_all(&image.data).unwrap();
-        let encoded_data = encoder.finish().unwrap();
+        let encoded_data = image.zlib_image_data().unwrap();
         std::fs::write("/tmp/0_zlib", &encoded_data).unwrap();
         println!("encode zlb: {:.2?}", now.elapsed());
 
         let now = std::time::Instant::now();
-        let cursor = Cursor::new(encoded_data);
-        let mut decoder = ZlibDecoder::new(cursor);
-        let mut decompressed_data = Vec::new();
-        // Ignoring the result because sometimes the
-        // data does not have the checksum, which will
-        // produce an error. This actually happens with
-        // files created by Pixaki 4 — whoops!
-        let _ = decoder.read_to_end(&mut decompressed_data);
-        // let mut decoder = ZlibDecoder::new();
-        // let now = std::time::Instant::now();
-        // _ = Image::open("/tmp/0_zlib").unwrap();
+        _ = Image::from_file_data(&encoded_data).unwrap();
         println!("decode zlb: {:.2?}", now.elapsed());
-
-        let image = Image {
-            data: decompressed_data,
-            size: image.size,
-            bytes_per_row: image.bytes_per_row,
-        };
-        image.save("/tmp/*output.png").unwrap();
 
         panic!()
     }

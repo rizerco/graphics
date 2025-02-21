@@ -19,6 +19,7 @@ pub mod cv;
 mod mask_operations;
 mod orientation;
 pub mod transformation;
+mod zlib;
 
 /// The representation of an image for graphics manipulation.
 #[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
@@ -73,10 +74,14 @@ impl Image {
 impl Image {
     /// Creates a new image from file data.
     pub fn from_file_data(data: &[u8]) -> anyhow::Result<Self> {
-        let dynamic_image = image::load_from_memory(data)?;
-        let exif_reader = exif::Reader::new();
-        let exif = exif_reader.read_raw(data.to_vec()).ok();
-        Self::from_dynamic_image(dynamic_image, exif)
+        if zlib::is_zlib_image(data) {
+            Self::from_zlib_image_data(data.to_vec())
+        } else {
+            let dynamic_image = image::load_from_memory(data)?;
+            let exif_reader = exif::Reader::new();
+            let exif = exif_reader.read_raw(data.to_vec()).ok();
+            Self::from_dynamic_image(dynamic_image, exif)
+        }
     }
 
     /// Opens an image file.

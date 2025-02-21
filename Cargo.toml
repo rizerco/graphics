@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
+file_stream = { git = "https://github.com/rizerco/file_stream.git" }
 flate2 = "1.0.30"
 getrandom = { version = "0.2", features = ["js"] }
 image = "0.24.7"
