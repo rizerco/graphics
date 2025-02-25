@@ -2,6 +2,7 @@ mod blend_mode;
 mod color;
 mod color_replace;
 pub mod composite;
+pub mod error;
 mod ffi;
 mod geometry;
 pub mod image;

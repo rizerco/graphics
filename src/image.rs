@@ -10,6 +10,7 @@ use std::path::Path;
 use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use crate::composite::{self, Layer};
+use crate::error::ImageError;
 use crate::{BlendMode, Color, Mask, Point, Rect, Size};
 pub use constraints::ImageConstraints;
 
@@ -592,20 +593,27 @@ impl Image {
     /// Returns a new image that is a subimage of this image within
     /// the supplied bounds.
     pub fn subimage(&self, region: Rect<i32>) -> anyhow::Result<Image> {
-        let mut result = Image::empty(region.size.into());
-        for y in 0..region.size.height {
-            for x in 0..region.size.width {
-                let point = Point {
-                    x: region.origin.x + x,
-                    y: region.origin.y + y,
-                };
-                let Some(color) = self.pixel_color(point) else {
-                    continue;
-                };
-                let point = Point { x, y }.into();
-                result.set_pixel_color(color, point);
-            }
+        let x = region.min_x() as u32;
+        let y = region.min_y() as u32;
+        let width = region.width() as u32;
+        let height = region.height() as u32;
+        let bytes_per_row = width * 4;
+        let mut subimage_data = Vec::new();
+
+        for row in 0..height {
+            let start = ((y + row) * self.bytes_per_row + x * 4) as usize;
+            let end = start + bytes_per_row as usize;
+            subimage_data.extend_from_slice(&self.data[start..end]);
         }
-        Ok(result)
+
+        let width = width as u32;
+        let height = height as u32;
+
+        let image = Image {
+            data: subimage_data,
+            size: Size { width, height },
+            bytes_per_row,
+        };
+        Ok(image)
     }
 }

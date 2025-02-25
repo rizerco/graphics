@@ -1,10 +1,8 @@
 #[cfg(test)]
 mod tests {
     use std::fs::File;
-    use std::io::{Cursor, Read, Write};
     use std::path::PathBuf;
 
-    use flate2::{bufread::ZlibDecoder, write::ZlibEncoder, Compression};
     use graphics::{Color, Image, Point, Rect, Size};
     use image::codecs::png::{self, PngEncoder};
     use image::{ImageEncoder, ImageFormat};
@@ -62,6 +60,22 @@ mod tests {
         println!("decode fpn: {:.2?}", now.elapsed());
 
         let now = std::time::Instant::now();
+        let data = image.file_data(ImageFormat::Tga).unwrap();
+        std::fs::write("/tmp/0_tga.tga", data).unwrap();
+        println!("encode tga: {:.2?}", now.elapsed());
+        let now = std::time::Instant::now();
+        _ = Image::open("/tmp/0_tga.tga").unwrap();
+        println!("decode tga: {:.2?}", now.elapsed());
+
+        let now = std::time::Instant::now();
+        let data = image.file_data(ImageFormat::WebP).unwrap();
+        std::fs::write("/tmp/0_webp.webp", data).unwrap();
+        println!("encode webp: {:.2?}", now.elapsed());
+        let now = std::time::Instant::now();
+        _ = Image::open("/tmp/0_webp.webp").unwrap();
+        println!("decode webp: {:.2?}", now.elapsed());
+
+        let now = std::time::Instant::now();
         let mut file = File::create("/tmp/0_lzw.tiff").unwrap();
         let mut tiff = TiffEncoder::new(&mut file).unwrap();
         tiff.write_image_with_compression::<RGBA8, _>(
@@ -116,6 +130,19 @@ mod tests {
         println!("decode zlb: {:.2?}", now.elapsed());
 
         panic!()
+    }
+
+    #[test]
+    fn subimage() {
+        let image = Image::open("tests/images/avatar.png").unwrap();
+        let expected_image = Image::open("tests/images/avatar_subimage.png").unwrap();
+
+        let region = Rect::new(2, 7, 13, 10);
+        let result = image.subimage(region).unwrap();
+
+        // result.save("/tmp/avatar_subimage.png").unwrap();
+
+        assert!(result.appears_equal_to(&expected_image));
     }
 
     #[test]
