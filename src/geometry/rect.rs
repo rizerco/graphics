@@ -88,6 +88,11 @@ where
         self.size.width = T::max(self.size.width, T::zero());
         self.size.height = T::max(self.size.height, T::zero());
     }
+
+    /// Returns the area of the rectangle.
+    pub fn area(&self) -> T {
+        self.size.width * self.size.height
+    }
 }
 
 impl<T> Rect<T>
