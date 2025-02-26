@@ -1,10 +1,6 @@
 use std::cmp::min;
 
-use num_traits::float::FloatCore;
-use num_traits::real::Real;
-use num_traits::Float;
-
-use crate::{BlendMode, Color, Image};
+use crate::{BlendMode, Color, Image, Point, Rect};
 
 use super::blend::{self, RgbaColor};
 use super::operation::Operation;
@@ -111,6 +107,20 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
             image.data[target_offset + x + 2] = base_color.blue;
             image.data[target_offset + x + 3] = base_color.alpha;
         }
+    }
+}
+
+impl Image {
+    /// Composites the provided image over this image.
+    pub fn composite_image_over(
+        &mut self,
+        image: &Image,
+        location: Point<i32>,
+        blend_mode: &BlendMode,
+    ) {
+        let mut layer = Layer::new(image, location.into());
+        layer.blend_mode = blend_mode.to_owned();
+        draw_layer_over_image(self, &layer);
     }
 }
 
