@@ -135,12 +135,25 @@ mod tests {
     #[test]
     fn subimage() {
         let image = Image::open("tests/images/avatar.png").unwrap();
-        let expected_image = Image::open("tests/images/avatar_subimage.png").unwrap();
+        let expected_image = Image::open("tests/images/avatar-subimage.png").unwrap();
 
         let region = Rect::new(2, 7, 13, 10);
         let result = image.subimage(region).unwrap();
 
-        // result.save("/tmp/avatar_subimage.png").unwrap();
+        // result.save("/tmp/avatar-subimage.png").unwrap();
+
+        assert!(result.appears_equal_to(&expected_image));
+    }
+
+    #[test]
+    fn negative_subimage() {
+        let image = Image::open("tests/images/avatar.png").unwrap();
+        let expected_image = Image::open("tests/images/avatar-negative-subimage.png").unwrap();
+
+        let region = Rect::new(-2, 7, 13, 10);
+        let result = image.subimage(region).unwrap();
+
+        // result.save("/tmp/avatar-negative-subimage.png").unwrap();
 
         assert!(result.appears_equal_to(&expected_image));
     }

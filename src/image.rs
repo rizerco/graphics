@@ -593,6 +593,14 @@ impl Image {
     /// Returns a new image that is a subimage of this image within
     /// the supplied bounds.
     pub fn subimage(&self, region: Rect<i32>) -> anyhow::Result<Image> {
+        let bounds = Rect {
+            origin: Point::zero(),
+            size: self.size,
+        }
+        .into();
+        let Some(region) = region.intersection(&bounds) else {
+            anyhow::bail!(ImageError::OutOfBounds)
+        };
         let x = region.min_x() as u32;
         let y = region.min_y() as u32;
         let width = region.width() as u32;
