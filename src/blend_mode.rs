@@ -169,9 +169,10 @@ impl<'de> Deserialize<'de> for BlendMode {
         let key = value
             .as_str()
             .ok_or_else(|| serde::de::Error::custom("Expected a string"))?;
-        Self::from_str(key).ok_or(serde::de::Error::custom(
-            "Unable to parse a valid blend mode.",
-        ))
+        Self::from_str(key).ok_or(serde::de::Error::custom(format!(
+            "Unable to parse a valid blend mode. Got value {:?}.",
+            key
+        )))
     }
 }
 
