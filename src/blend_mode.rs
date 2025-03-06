@@ -126,6 +126,7 @@ impl BlendMode {
             "addition" => Some(Self::Addition),
             "color" => Some(Self::Color),
             "colorBurn" | "color_burn" | "color-burn" => Some(Self::ColorBurn),
+            "colorDodge" | "color_dodge" | "color-dodge" => Some(Self::ColorDodge),
             "darken" => Some(Self::Darken),
             "destinationIn" | "destination_in" | "destination-in" => Some(Self::DestinationIn),
             "destinationOut" | "destination_out" | "destination-out" => Some(Self::DestinationOut),
