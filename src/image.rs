@@ -19,6 +19,7 @@ mod constraints;
 pub mod cv;
 mod mask_operations;
 mod orientation;
+pub mod raw;
 pub mod transformation;
 mod zlib;
 
