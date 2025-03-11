@@ -11,7 +11,7 @@ use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use crate::composite::{self, Layer};
 use crate::error::ImageError;
-use crate::{BlendMode, Color, Mask, Point, Rect, Size};
+use crate::{BlendMode, Color, Mask, Point, PositionedMask, Rect, Size};
 pub use constraints::ImageConstraints;
 
 mod colors;
@@ -582,18 +582,13 @@ impl Image {
 
     /// Returns a new image that is the image intersecting
     /// the supplied mask.
-    pub fn subimage_masked(&self, mask: &Mask) -> anyhow::Result<Image> {
-        match mask {
-            Mask::Bounded { image, origin } => {
-                let mut result = self.clone();
-                result.crop_with_offset(image.size.into(), *origin)?;
-                let mut layer = Layer::new(image, Point::zero());
-                layer.blend_mode = BlendMode::DestinationIn;
-                composite::draw_layer_over_image(&mut result, &layer);
-                Ok(result)
-            }
-            Mask::Tiled { image, offset } => todo!(),
-        }
+    pub fn subimage_masked(&self, mask: &PositionedMask) -> anyhow::Result<Image> {
+        let mut result = self.clone();
+        result.crop_with_offset(mask.image.size.into(), mask.origin)?;
+        let mut layer = Layer::new(&mask.image, Point::zero());
+        layer.blend_mode = BlendMode::DestinationIn;
+        composite::draw_layer_over_image(&mut result, &layer);
+        Ok(result)
     }
 
     /// Returns a new image that is a subimage of this image within

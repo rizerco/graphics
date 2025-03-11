@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::{BlendMode, Image, Mask, Point, Size};
 
 /// Represents a layer that can be composited with
@@ -5,7 +7,7 @@ use crate::{BlendMode, Image, Mask, Point, Size};
 #[derive(Debug, Clone)]
 pub struct Layer<'a> {
     /// The image to composite.
-    pub image: Either<'a, Image>,
+    pub image: Cow<'a, Image>,
     /// The position of the image on the canvas.
     pub position: Point<f32>,
     /// The size of the image on the canvas.
@@ -15,7 +17,7 @@ pub struct Layer<'a> {
     /// The layer’s opacity.
     pub opacity: f32,
     /// The layer’s masks.
-    pub masks: Vec<&'a Mask>,
+    pub masks: Vec<Mask<'a>>,
 }
 
 /// Defines a property that can be either owned or borrowed.
@@ -34,7 +36,7 @@ impl<'a> Layer<'a> {
     pub fn new(image: &'a Image, position: Point<f32>) -> Self {
         let size_on_canvas = image.size.into();
         Self {
-            image: Either::Borrowed(image),
+            image: Cow::Borrowed(image),
             position,
             size_on_canvas,
             blend_mode: BlendMode::default(),
@@ -47,7 +49,7 @@ impl<'a> Layer<'a> {
     pub fn new_owned(image: Image, position: Point<f32>) -> Self {
         let size_on_canvas = image.size.into();
         Self {
-            image: Either::Owned(image),
+            image: Cow::Owned(image),
             position,
             size_on_canvas,
             blend_mode: BlendMode::default(),

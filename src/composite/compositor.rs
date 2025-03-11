@@ -4,7 +4,7 @@ use crate::{BlendMode, Color, Image, Point};
 
 use super::blend::{self, RgbaColor};
 use super::operation::Operation;
-use super::{Either, Layer};
+use super::Layer;
 
 /// Composites multiple images together and returns the result.
 pub fn composite(operation: &Operation) -> Image {
@@ -25,14 +25,8 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
         return;
     }
 
-    let layer_size = match &layer.image {
-        Either::Owned(image) => image.size,
-        Either::Borrowed(image) => image.size,
-    };
-    let layer_bytes_per_row = match &layer.image {
-        Either::Owned(image) => image.bytes_per_row,
-        Either::Borrowed(image) => image.bytes_per_row,
-    };
+    let layer_size = layer.image.size;
+    let layer_bytes_per_row = layer.image.bytes_per_row;
 
     let pixel_ratio_x = (layer_size.width as f32 / layer.size_on_canvas.width).round();
     let pixel_ratio_y = (layer_size.height as f32 / layer.size_on_canvas.height).round();
@@ -91,10 +85,7 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
                 break;
             }
             let start = offset + x_position;
-            let blend_color: [u8; 4] = match &layer.image {
-                Either::Owned(image) => pixel_data(&image.data, start),
-                Either::Borrowed(image) => pixel_data(&image.data, start),
-            };
+            let blend_color = pixel_data(&layer.image.data, start);
             let blend_color: Color = blend_color.into();
 
             let start = target_offset + x;

@@ -1,50 +1,32 @@
-use crate::{
-    composite::{self, Layer, Operation},
-    BlendMode, Image, Mask, Point,
-};
+use crate::composite::{self, Layer, Operation};
+use crate::{BlendMode, Image, Point, PositionedMask};
 
 /// Deletes the pixels in the image within the supplied mask image.
-pub fn delete_pixels(image: &mut Image, mask: &Mask) {
-    match mask {
-        Mask::Bounded {
-            image: mask_image,
-            origin,
-        } => {
-            let base_layer = Layer::new(image, Point::zero());
-            let mut blend_layer = Layer::new(mask_image, (*origin).into());
-            blend_layer.blend_mode = BlendMode::DestinationOut;
+pub fn delete_pixels(image: &mut Image, mask: &PositionedMask) {
+    let base_layer = Layer::new(image, Point::zero());
+    let mut blend_layer = Layer::new(&mask.image, mask.origin.into());
+    blend_layer.blend_mode = BlendMode::DestinationOut;
 
-            let operation = Operation::new(vec![base_layer, blend_layer], image.size);
-            *image = composite::composite(&operation);
-        }
-        Mask::Tiled { image, offset } => todo!(),
-    }
+    let operation = Operation::new(vec![base_layer, blend_layer], image.size);
+    *image = composite::composite(&operation);
 }
 
 /// Returns the image that intersects the supplied mask.
-pub fn subimage(image: &Image, mask: &Mask) -> Image {
-    match mask {
-        Mask::Bounded {
-            image: mask_image,
-            origin,
-        } => {
-            let base_origin = *origin * -1;
-            let base_layer = Layer::new(image, base_origin.into());
-            let mut blend_layer = Layer::new(mask_image, Point::zero());
-            blend_layer.blend_mode = BlendMode::DestinationIn;
+pub fn subimage(image: &Image, mask: &PositionedMask) -> Image {
+    let base_origin = mask.origin * -1;
+    let base_layer = Layer::new(image, base_origin.into());
+    let mut blend_layer = Layer::new(&mask.image, Point::zero());
+    blend_layer.blend_mode = BlendMode::DestinationIn;
 
-            let operation = Operation::new(vec![base_layer, blend_layer], mask_image.size.into());
-            composite::composite(&operation)
-        }
-        Mask::Tiled { image, offset } => todo!(),
-    }
+    let operation = Operation::new(vec![base_layer, blend_layer], mask.image.size.into());
+    composite::composite(&operation)
 }
 
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
-    use crate::{Image, Mask, Rect};
+    use crate::{Image, PositionedMask, Rect};
 
     #[test]
     fn delete_pixels() {
@@ -61,7 +43,7 @@ mod tests {
         let expected_image = Image::open(path).unwrap();
 
         let bounding_box = Rect::new(5, 100, 15, 15);
-        let mask = Mask::bounded(mask_image, bounding_box);
+        let mask = PositionedMask::bounded(mask_image, bounding_box);
 
         super::delete_pixels(&mut image, &mask);
 
@@ -85,7 +67,7 @@ mod tests {
         let expected_image = Image::open(path).unwrap();
 
         let bounding_box = Rect::new(5, 100, 15, 15);
-        let mask = Mask::bounded(mask_image, bounding_box);
+        let mask = PositionedMask::bounded(mask_image, bounding_box);
 
         let result = super::subimage(&image, &mask);
 
