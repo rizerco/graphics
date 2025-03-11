@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use crate::{BlendMode, Color, Image, Point, Rect};
+use crate::{BlendMode, Color, Image, Point};
 
 use super::blend::{self, RgbaColor};
 use super::operation::Operation;
@@ -83,6 +83,13 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
         for x in (0..required_width * 4).step_by(4) {
             let x_position = x + x_offset;
             let x_position = (x_position as f32 * pixel_ratio_x).floor() as usize;
+            if layer.mask_alpha(Point {
+                x: x_position as u32,
+                y: y_position as u32,
+            }) == 0
+            {
+                break;
+            }
             let start = offset + x_position;
             let blend_color: [u8; 4] = match &layer.image {
                 Either::Owned(image) => pixel_data(&image.data, start),
@@ -116,10 +123,10 @@ impl Image {
         &mut self,
         image: &Image,
         location: Point<i32>,
-        blend_mode: &BlendMode,
+        options: &CompositeOperationOptions,
     ) {
         let mut layer = Layer::new(image, location.into());
-        layer.blend_mode = blend_mode.to_owned();
+        layer.blend_mode = options.blend_mode.to_owned();
         draw_layer_over_image(self, &layer);
     }
 }
@@ -208,6 +215,15 @@ fn blend_colors(color: &mut Color, blend_color: &Color, blend_mode: BlendMode, o
     color.green = result.green;
     color.blue = result.blue;
     color.alpha = result.alpha;
+}
+
+/// Options for compositing.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct CompositeOperationOptions<'a> {
+    /// The blend mode.
+    pub blend_mode: BlendMode,
+    /// The mask image.
+    pub mask_image: Option<&'a Image>,
 }
 
 #[cfg(test)]

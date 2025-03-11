@@ -1,4 +1,4 @@
-use crate::{BlendMode, Image, Point, Size};
+use crate::{BlendMode, Image, Mask, Point, Size};
 
 /// Represents a layer that can be composited with
 /// other layers to create a single image.
@@ -14,6 +14,8 @@ pub struct Layer<'a> {
     pub blend_mode: BlendMode,
     /// The layer’s opacity.
     pub opacity: f32,
+    /// The layer’s masks.
+    pub masks: Vec<&'a Mask>,
 }
 
 /// Defines a property that can be either owned or borrowed.
@@ -37,6 +39,7 @@ impl<'a> Layer<'a> {
             size_on_canvas,
             blend_mode: BlendMode::default(),
             opacity: 1.0,
+            masks: Vec::new(),
         }
     }
 
@@ -49,6 +52,22 @@ impl<'a> Layer<'a> {
             size_on_canvas,
             blend_mode: BlendMode::default(),
             opacity: 1.0,
+            masks: Vec::new(),
         }
+    }
+}
+
+// MARK: Utilities
+
+impl<'a> Layer<'a> {
+    /// Returns the alpha for the mask at a given location.
+    /// If there is no mask, u8::MAX is returned.
+    pub fn mask_alpha(&self, location: Point<u32>) -> u8 {
+        let mut result = u8::MAX;
+
+        for mask in self.masks.iter() {
+            // result = ()
+        }
+        result
     }
 }

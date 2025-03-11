@@ -60,13 +60,13 @@ fn flood_fill_in_bounds(
     start: Point<i32>,
     fill_color: &Color,
     secondary_image: Option<&mut Image>,
-    bounding_box: Option<Rect<i32>>,
+    bounding_box: Option<&Rect<i32>>,
 ) -> anyhow::Result<Rect<i32>> {
     let image_bounds = Rect {
         origin: Point::zero(),
         size: image.size.into(),
     };
-    let bounding_box = bounding_box.unwrap_or(image_bounds);
+    let bounding_box = bounding_box.unwrap_or(&image_bounds);
 
     // A selection outside of the bounds of the image is possible, so clamp
     // the bounding box to the image bounds.
@@ -233,27 +233,40 @@ pub fn flood_fill_with_mask(
     image: &mut Image,
     start: Point<i32>,
     fill_color: &Color,
-    mask: &dyn Mask,
+    mask: &Mask,
 ) -> anyhow::Result<Rect<i32>> {
-    let bounding_box = Some(mask.bounding_box());
-    let mut result = image.clone();
-    let affected_region = flood_fill_in_bounds(&mut result, start, fill_color, None, bounding_box)?;
-    if fill_color.alpha == 0 {
-        // For a clear, erase the masked area,
-        // then just draw the two images on top of each other.
-        let mut layer = Layer::new(&mask.image(), mask.bounding_box().origin.into());
-        layer.blend_mode = BlendMode::DestinationOut;
-        let mut image_with_mask_erased = image.clone();
-        composite::draw_layer_over_image(&mut image_with_mask_erased, &layer);
-        let layer = Layer::new(&image_with_mask_erased, Point::zero());
-        composite::draw_layer_over_image(&mut result, &layer);
-        *image = result;
-    } else {
-        let subimage = result.subimage_masked(mask)?;
-        let layer = Layer::new(&subimage, mask.bounding_box().origin.into());
-        composite::draw_layer_over_image(image, &layer);
+    match mask {
+        Mask::Bounded {
+            image: mask_image,
+            origin,
+        } => {
+            let mut result = image.clone();
+            let affected_region = flood_fill_in_bounds(
+                &mut result,
+                start,
+                fill_color,
+                None,
+                mask.bounding_box().as_ref(),
+            )?;
+            if fill_color.alpha == 0 {
+                // For a clear, erase the masked area,
+                // then just draw the two images on top of each other.
+                let mut layer = Layer::new(mask_image, origin.clone().into());
+                layer.blend_mode = BlendMode::DestinationOut;
+                let mut image_with_mask_erased = image.clone();
+                composite::draw_layer_over_image(&mut image_with_mask_erased, &layer);
+                let layer = Layer::new(&image_with_mask_erased, Point::zero());
+                composite::draw_layer_over_image(&mut result, &layer);
+                *image = result;
+            } else {
+                let subimage = result.subimage_masked(mask)?;
+                let layer = Layer::new(&subimage, origin.clone().into());
+                composite::draw_layer_over_image(image, &layer);
+            }
+            Ok(affected_region)
+        }
+        Mask::Tiled { image, offset } => todo!(),
     }
-    Ok(affected_region)
 }
 
 /// Performs a flood fill referencing one image but
@@ -400,21 +413,6 @@ mod test {
         );
     }
 
-    struct TestMask {
-        image: Image,
-        bounding_box: Rect<i32>,
-    }
-
-    impl Mask for TestMask {
-        fn image(&self) -> &Image {
-            &self.image
-        }
-
-        fn bounding_box(&self) -> Rect<i32> {
-            self.bounding_box
-        }
-    }
-
     #[test]
     fn test_flood_fill_with_mask() {
         let manifest_directory = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -426,10 +424,7 @@ mod test {
         path.push("tests/images/mask.png");
         let mask_image = Image::open(path).unwrap();
 
-        let mask = TestMask {
-            image: mask_image,
-            bounding_box: Rect::new(6, 14, 15, 15),
-        };
+        let mask = Mask::bounded(mask_image, Rect::new(6, 14, 15, 15));
 
         let fill_color = Color::from_rgb_u32(0x70AEBF);
         let mut result_01 = image.clone();
@@ -463,10 +458,7 @@ mod test {
         path.push("tests/images/mask.png");
         let mask_image = Image::open(path).unwrap();
 
-        let mask = TestMask {
-            image: mask_image,
-            bounding_box: Rect::new(6, 14, 15, 15),
-        };
+        let mask = Mask::bounded(mask_image, Rect::new(6, 14, 15, 15));
 
         let fill_color = Color::CLEAR;
         let mut result_01 = image.clone();

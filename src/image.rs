@@ -582,13 +582,18 @@ impl Image {
 
     /// Returns a new image that is the image intersecting
     /// the supplied mask.
-    pub fn subimage_masked(&self, mask: &dyn Mask) -> anyhow::Result<Image> {
-        let mut result = self.clone();
-        result.crop_with_offset(mask.bounding_box().size.into(), mask.bounding_box().origin)?;
-        let mut layer = Layer::new(mask.image(), Point::zero());
-        layer.blend_mode = BlendMode::DestinationIn;
-        composite::draw_layer_over_image(&mut result, &layer);
-        Ok(result)
+    pub fn subimage_masked(&self, mask: &Mask) -> anyhow::Result<Image> {
+        match mask {
+            Mask::Bounded { image, origin } => {
+                let mut result = self.clone();
+                result.crop_with_offset(image.size.into(), *origin)?;
+                let mut layer = Layer::new(image, Point::zero());
+                layer.blend_mode = BlendMode::DestinationIn;
+                composite::draw_layer_over_image(&mut result, &layer);
+                Ok(result)
+            }
+            Mask::Tiled { image, offset } => todo!(),
+        }
     }
 
     /// Returns a new image that is a subimage of this image within
