@@ -8,7 +8,7 @@ pub enum Mask<'a> {
     /// A positioned mask.
     Positioned(PositionedMask<'a>),
     /// A tiled mask.
-    Tiled(TiledMask),
+    Tiled(TiledMask<'a>),
 }
 
 pub trait Flamble: Clone + std::fmt::Debug {}
@@ -30,8 +30,8 @@ pub struct PositionedMask<'a> {
 
 #[derive(Debug, Clone)]
 /// A mask image that is tiled across the canvas.
-pub struct TiledMask {
-    pub image: Image,
+pub struct TiledMask<'a> {
+    pub image: Cow<'a, Image>,
     pub offset: Point<i32>,
 }
 
