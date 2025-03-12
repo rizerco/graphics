@@ -70,9 +70,18 @@ impl<'a> Layer<'a> {
                     positioned_mask.image.pixel_color(location)
                 }
                 Mask::Tiled(tiled_mask) => {
+                    if self.position.x >= 0.0 {
+                        location.x += self.position.x as i32;
+                    }
+                    if self.position.y >= 0.0 {
+                        location.y += self.position.y as i32;
+                    }
                     location -= tiled_mask.offset;
                     let width = tiled_mask.image.size.width as i32;
                     let height = tiled_mask.image.size.height as i32;
+                    while location.x < 0 {
+                        location.x += width;
+                    }
                     if location.x < 0 {
                         location.x = width + (location.x % width);
                     }

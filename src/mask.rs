@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use crate::{Image, Point, Rect};
 
 /// Defines a mask.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Mask<'a> {
     /// A positioned mask.
     Positioned(PositionedMask<'a>),
@@ -21,17 +21,21 @@ pub trait BoundedMask {
     fn bounding_box(&self) -> Rect<i32>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 /// A mask image that is contained within a bounding box.
 pub struct PositionedMask<'a> {
+    /// The mask image.
     pub image: Cow<'a, Image>,
+    /// The location at which to position the image on the canvas.
     pub origin: Point<i32>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 /// A mask image that is tiled across the canvas.
 pub struct TiledMask<'a> {
+    /// The image that represents the mask.
     pub image: Cow<'a, Image>,
+    /// The offset location from which to start the tile.
     pub offset: Point<i32>,
 }
 

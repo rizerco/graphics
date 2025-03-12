@@ -1,6 +1,6 @@
 use std::cmp::min;
 
-use crate::{BlendMode, Color, Image, Point};
+use crate::{BlendMode, Color, Image, Mask, Point};
 
 use super::blend::{self, RgbaColor};
 use super::operation::Operation;
@@ -74,16 +74,18 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
         let target_offset = ((target_y_offset + y) * image.bytes_per_row) as i32;
         let target_offset = (target_offset + (start_x as i32) * 4) as usize;
         // Using a second loop was a tiny bit faster than splicing the vec.
-        for x in (0..required_width * 4).step_by(4) {
+        for x in 0..required_width {
+            let alpha = layer.mask_alpha(Point {
+                x: x as u32,
+                y: y as u32,
+            });
+            if alpha == 0 {
+                continue;
+            }
+            let mask_opacity = alpha as f32 / u8::MAX as f32;
+            let x = x * 4;
             let x_position = x + x_offset;
             let x_position = (x_position as f32 * pixel_ratio_x).floor() as usize;
-            if layer.mask_alpha(Point {
-                x: x_position as u32,
-                y: y_position as u32,
-            }) == 0
-            {
-                break;
-            }
             let start = offset + x_position;
             let blend_color = pixel_data(&layer.image.data, start);
             let blend_color: Color = blend_color.into();
@@ -96,7 +98,7 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
                 &mut base_color,
                 &blend_color,
                 layer.blend_mode,
-                layer.opacity,
+                layer.opacity * mask_opacity,
             );
             // let base_color = Color::RED;
 
@@ -118,6 +120,7 @@ impl Image {
     ) {
         let mut layer = Layer::new(image, location.into());
         layer.blend_mode = options.blend_mode.to_owned();
+        layer.masks = options.masks.to_owned();
         draw_layer_over_image(self, &layer);
     }
 }
@@ -213,12 +216,16 @@ fn blend_colors(color: &mut Color, blend_color: &Color, blend_mode: BlendMode, o
 pub struct CompositeOperationOptions<'a> {
     /// The blend mode.
     pub blend_mode: BlendMode,
-    /// The mask image.
-    pub mask_image: Option<&'a Image>,
+    /// The masks.
+    pub masks: Vec<Mask<'a>>,
 }
 
 #[cfg(test)]
 mod test {
+    use std::borrow::Cow;
+
+    use crate::{Mask, Size, TiledMask};
+
     use super::*;
 
     #[test]
@@ -250,5 +257,99 @@ mod test {
         assert_eq!(color.green, 0x2a, "Greens don’t match.");
         assert_eq!(color.blue, 0xff, "Blues don’t match.");
         assert_eq!(color.alpha, 153, "Alphas don’t match.");
+    }
+
+    #[test]
+    fn draw_layer_with_tiled_mask() {
+        let mut base_image = Image::color(
+            &Color::from_rgb_u32(0x639bff),
+            Size {
+                width: 16,
+                height: 8,
+            },
+        );
+        let image = Image::color(
+            &Color::from_rgb_u32(0xcbdbfc),
+            Size {
+                width: 13,
+                height: 6,
+            },
+        );
+        let position = Point { x: 1.0, y: 1.0 };
+        let mut layer = Layer::new(&image, position);
+
+        // Setting up a checkerboard image.
+        let mut image = Image::empty(Size {
+            width: 2,
+            height: 2,
+        });
+        image.set_pixel_color(Color::BLACK, Point::zero());
+        image.set_pixel_color(Color::BLACK, Point { x: 1, y: 1 });
+
+        let mask = TiledMask {
+            image: Cow::Borrowed(&image),
+            offset: Point { x: 1, y: 0 },
+        };
+        let mask = Mask::Tiled(mask);
+        layer.masks = vec![mask];
+
+        draw_layer_over_image(&mut base_image, &layer);
+
+        // Reposition the layer and draw again to make sure
+        // that the mask stays put.
+        layer.position.x += 1.0;
+        draw_layer_over_image(&mut base_image, &layer);
+
+        // base_image.save("/tmp/tiled_mask.png").unwrap();
+
+        let expected_image = Image::open("tests/images/tiled_mask.png").unwrap();
+
+        assert!(base_image.appears_equal_to(&expected_image));
+    }
+
+    #[test]
+    fn draw_layer_with_tiled_mask_negative_position() {
+        let mut base_image = Image::color(
+            &Color::from_rgb_u32(0x639bff),
+            Size {
+                width: 16,
+                height: 8,
+            },
+        );
+        let image = Image::color(
+            &Color::from_rgb_u32(0xcbdbfc),
+            Size {
+                width: 13,
+                height: 6,
+            },
+        );
+        let position = Point { x: -1.0, y: -1.0 };
+        let mut layer = Layer::new(&image, position);
+
+        // Setting up a checkerboard image.
+        let mut image = Image::empty(Size {
+            width: 3,
+            height: 3,
+        });
+        image.set_pixel_color(Color::BLACK, Point::zero());
+        image.set_pixel_color(Color::BLACK, Point { x: 1, y: 1 });
+
+        let mask = TiledMask {
+            image: Cow::Borrowed(&image),
+            offset: Point { x: 0, y: 0 },
+        };
+        let mask = Mask::Tiled(mask);
+        layer.masks = vec![mask];
+
+        draw_layer_over_image(&mut base_image, &layer);
+
+        layer.position.x -= 1.0;
+        draw_layer_over_image(&mut base_image, &layer);
+
+        // base_image.save("/tmp/tiled_mask_negative.png").unwrap();
+
+        let expected_image = Image::open("tests/images/tiled_mask_negative.png").unwrap();
+
+        assert!(base_image.appears_equal_to(&expected_image));
     }
 }
