@@ -1,5 +1,7 @@
 use std::cmp::min;
 
+use rayon::prelude::*;
+
 use crate::{BlendMode, Color, Image, Mask, Point};
 
 use super::blend::{self, RgbaColor};
@@ -59,55 +61,51 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
         0
     };
 
-    let y_offset = if location.y < 0 {
-        location.y.abs() as u32
-    } else {
-        0
-    };
+    image
+        .data
+        .par_chunks_mut(image.bytes_per_row as usize)
+        .enumerate()
+        .skip(target_y_offset as usize) // Skip rows outside the target area
+        .take(required_height as usize) // Only process the necessary rows
+        .for_each(|(y, row)| {
+            let y = y as u32;
+            let y_position = y as i32 - location.y;
+            let y_position = (y_position as f32 * pixel_ratio_y).floor() as u32;
+            let offset = (y_position * layer_bytes_per_row) as usize;
 
-    // I tried using rayon for this, but with 10,000 rows the performance
-    // was a little worse with rayon than without.
-    for y in 0..required_height {
-        let y_position = y + y_offset;
-        let y_position = (y_position as f32 * pixel_ratio_y).floor() as u32;
-        let offset = (y_position * layer_bytes_per_row) as usize; //+ y_offset;
-        let target_offset = ((target_y_offset + y) * image.bytes_per_row) as i32;
-        let target_offset = (target_offset + (start_x as i32) * 4) as usize;
-        // Using a second loop was a tiny bit faster than splicing the vec.
-        for x in 0..required_width {
-            let alpha = layer.mask_alpha(Point {
-                x: x as u32,
-                y: y as u32,
-            });
-            if alpha == 0 {
-                continue;
+            for x in 0..required_width {
+                let alpha = layer.mask_alpha(Point {
+                    x: x as u32,
+                    y: y - target_y_offset,
+                });
+                if alpha == 0 {
+                    continue;
+                }
+                let mask_opacity = alpha as f32 / u8::MAX as f32;
+                let x = x * 4;
+                let x_position = x + x_offset;
+                let x_position = (x_position as f32 * pixel_ratio_x).floor() as usize;
+                let start = offset + x_position;
+                let blend_color = pixel_data(&layer.image.data, start);
+                let blend_color: Color = blend_color.into();
+
+                let start = start_x as usize * 4 + x;
+                let base_color = pixel_data(&row, start);
+                let mut base_color: Color = base_color.into();
+
+                blend_colors(
+                    &mut base_color,
+                    &blend_color,
+                    layer.blend_mode,
+                    layer.opacity * mask_opacity,
+                );
+
+                row[start + 0] = base_color.red;
+                row[start + 1] = base_color.green;
+                row[start + 2] = base_color.blue;
+                row[start + 3] = base_color.alpha;
             }
-            let mask_opacity = alpha as f32 / u8::MAX as f32;
-            let x = x * 4;
-            let x_position = x + x_offset;
-            let x_position = (x_position as f32 * pixel_ratio_x).floor() as usize;
-            let start = offset + x_position;
-            let blend_color = pixel_data(&layer.image.data, start);
-            let blend_color: Color = blend_color.into();
-
-            let start = target_offset + x;
-            let base_color = pixel_data(&image.data, start);
-            let mut base_color: Color = base_color.into();
-
-            blend_colors(
-                &mut base_color,
-                &blend_color,
-                layer.blend_mode,
-                layer.opacity * mask_opacity,
-            );
-            // let base_color = Color::RED;
-
-            image.data[target_offset + x + 0] = base_color.red;
-            image.data[target_offset + x + 1] = base_color.green;
-            image.data[target_offset + x + 2] = base_color.blue;
-            image.data[target_offset + x + 3] = base_color.alpha;
-        }
-    }
+        });
 }
 
 impl Image {
@@ -126,11 +124,12 @@ impl Image {
 }
 
 /// Retrieves the pixel data from a given location in a vector of RGBA bytes.
-fn pixel_data(source: &Vec<u8>, offset: usize) -> [u8; 4] {
+fn pixel_data(source: &[u8], offset: usize) -> [u8; 4] {
     source
         .get(offset..(offset + 4))
         .and_then(|data| data.try_into().ok())
-        .unwrap_or_default()
+        .unwrap_or([u8::MAX, 0, 0, u8::MAX])
+    // .unwrap_or_default()
 }
 
 /// Blends one colour with another.
@@ -300,7 +299,7 @@ mod test {
         layer.position.x += 1.0;
         draw_layer_over_image(&mut base_image, &layer);
 
-        // base_image.save("/tmp/tiled_mask.png").unwrap();
+        base_image.save("/tmp/tiled_mask.png").unwrap();
 
         let expected_image = Image::open("tests/images/tiled_mask.png").unwrap();
 
@@ -346,10 +345,39 @@ mod test {
         layer.position.x -= 1.0;
         draw_layer_over_image(&mut base_image, &layer);
 
-        // base_image.save("/tmp/tiled_mask_negative.png").unwrap();
+        base_image.save("/tmp/tiled_mask_negative.png").unwrap();
 
         let expected_image = Image::open("tests/images/tiled_mask_negative.png").unwrap();
 
         assert!(base_image.appears_equal_to(&expected_image));
+    }
+
+    #[test]
+    #[ignore]
+    fn draw_layer_performance() {
+        let size = Size {
+            width: 10,
+            height: 10,
+        };
+        // let size = Size {
+        //     width: 4,
+        //     height: 4,
+        // };
+        let mut base_image = Image::color(&Color::from_rgb_u32(0x639bff), size);
+        let mut image = Image::color(&Color::from_rgb_u32(0xcbdbfc), size);
+        image.set_pixel_color(Color::CLEAR, Point { x: 2, y: 1 });
+        image.set_pixel_color(Color::GREEN, Point { x: 0, y: 0 });
+        image.set_pixel_color(Color::CYAN, Point { x: 1, y: 0 });
+        // image.save("/tmp/loco.png").unwrap();
+        let position = Point { x: 0.0, y: -1.0 };
+        let layer = Layer::new(&image, position);
+
+        let now = std::time::Instant::now();
+        draw_layer_over_image(&mut base_image, &layer);
+        // 670ms
+        println!("🍟 time taken: {:?}", now.elapsed());
+
+        base_image.save("/tmp/base_image.png").unwrap();
+        panic!();
     }
 }
