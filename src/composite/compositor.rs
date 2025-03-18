@@ -61,51 +61,104 @@ pub fn draw_layer_over_image(image: &mut Image, layer: &Layer) {
         0
     };
 
-    image
-        .data
-        .par_chunks_mut(image.bytes_per_row as usize)
-        .enumerate()
-        .skip(target_y_offset as usize) // Skip rows outside the target area
-        .take(required_height as usize) // Only process the necessary rows
-        .for_each(|(y, row)| {
-            let y = y as u32;
-            let y_position = y as i32 - location.y;
-            let y_position = (y_position as f32 * pixel_ratio_y).floor() as u32;
-            let offset = (y_position * layer_bytes_per_row) as usize;
-
-            for x in 0..required_width {
-                let alpha = layer.mask_alpha(Point {
-                    x: x as u32,
-                    y: y - target_y_offset,
-                });
-                if alpha == 0 {
-                    continue;
-                }
-                let mask_opacity = alpha as f32 / u8::MAX as f32;
-                let x = x * 4;
-                let x_position = x + x_offset;
-                let x_position = (x_position as f32 * pixel_ratio_x).floor() as usize;
-                let start = offset + x_position;
-                let blend_color = pixel_data(&layer.image.data, start);
-                let blend_color: Color = blend_color.into();
-
-                let start = start_x as usize * 4 + x;
-                let base_color = pixel_data(&row, start);
-                let mut base_color: Color = base_color.into();
-
-                blend_colors(
-                    &mut base_color,
-                    &blend_color,
-                    layer.blend_mode,
-                    layer.opacity * mask_opacity,
+    if image.size.height > 100 {
+        image
+            .data
+            .par_chunks_mut(image.bytes_per_row as usize)
+            .enumerate()
+            .skip(target_y_offset as usize) // Skip rows outside the target area
+            .take(required_height as usize) // Only process the necessary rows
+            .for_each(|(y, row)| {
+                process_row(
+                    y,
+                    row,
+                    layer,
+                    layer_bytes_per_row,
+                    location,
+                    pixel_ratio_x,
+                    pixel_ratio_y,
+                    required_width,
+                    start_x,
+                    target_y_offset,
+                    x_offset,
                 );
+            });
+    } else {
+        image
+            .data
+            .chunks_mut(image.bytes_per_row as usize)
+            .enumerate()
+            .skip(target_y_offset as usize) // Skip rows outside the target area
+            .take(required_height as usize) // Only process the necessary rows
+            .for_each(|(y, row)| {
+                process_row(
+                    y,
+                    row,
+                    layer,
+                    layer_bytes_per_row,
+                    location,
+                    pixel_ratio_x,
+                    pixel_ratio_y,
+                    required_width,
+                    start_x,
+                    target_y_offset,
+                    x_offset,
+                );
+            });
+    }
+}
 
-                row[start + 0] = base_color.red;
-                row[start + 1] = base_color.green;
-                row[start + 2] = base_color.blue;
-                row[start + 3] = base_color.alpha;
-            }
+/// Processes the rows of data.
+fn process_row(
+    y: usize,
+    row: &mut [u8],
+    layer: &Layer<'_>,
+    layer_bytes_per_row: u32,
+    location: Point<i32>,
+    pixel_ratio_x: f32,
+    pixel_ratio_y: f32,
+    required_width: usize,
+    start_x: u32,
+    target_y_offset: u32,
+    x_offset: usize,
+) {
+    let y = y as u32;
+    let y_position = y as i32 - location.y;
+    let y_position = (y_position as f32 * pixel_ratio_y).floor() as u32;
+    let offset = (y_position * layer_bytes_per_row) as usize;
+
+    for x in 0..required_width {
+        let alpha = layer.mask_alpha(Point {
+            x: x as u32,
+            y: y - target_y_offset,
         });
+        if alpha == 0 {
+            continue;
+        }
+        let mask_opacity = alpha as f32 / u8::MAX as f32;
+        let x = x * 4;
+        let x_position = x + x_offset;
+        let x_position = (x_position as f32 * pixel_ratio_x).floor() as usize;
+        let start = offset + x_position;
+        let blend_color = pixel_data(&layer.image.data, start);
+        let blend_color: Color = blend_color.into();
+
+        let start = start_x as usize * 4 + x;
+        let base_color = pixel_data(&row, start);
+        let mut base_color: Color = base_color.into();
+
+        blend_colors(
+            &mut base_color,
+            &blend_color,
+            layer.blend_mode,
+            layer.opacity * mask_opacity,
+        );
+
+        row[start + 0] = base_color.red;
+        row[start + 1] = base_color.green;
+        row[start + 2] = base_color.blue;
+        row[start + 3] = base_color.alpha;
+    }
 }
 
 impl Image {
