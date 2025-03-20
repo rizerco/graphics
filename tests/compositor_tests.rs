@@ -652,7 +652,7 @@ fn composite_resized_image() {
             height: 80,
         },
     );
-    let gerbil = Image::open("tests/images/gerbil.jpg").unwrap();
+    let gerbil = Image::open("tests/images/gerbil.webp").unwrap();
     let mut layer = Layer::new(&gerbil, Point { x: 6.5, y: 12.3 });
     layer.size_on_canvas = Size {
         width: 74.5,
