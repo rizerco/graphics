@@ -1,8 +1,8 @@
 use core::ops::Add;
 use num_traits::{Float, Num, One, Zero};
-use std::{cmp, ops::Mul};
+use std::ops::Mul;
 
-#[derive(Debug, Clone, Copy, PartialEq, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Deserialize, serde::Serialize)]
 /// Represents a size.
 pub struct Size<T: Num> {
     /// The width.
