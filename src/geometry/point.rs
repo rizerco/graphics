@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign};
 
 use num_traits::{Float, Num, Zero};
 
@@ -214,6 +214,20 @@ where
         Self {
             x: self.x * scalar,
             y: self.y * scalar,
+        }
+    }
+}
+
+impl<T> Div<T> for Point<T>
+where
+    T: Copy + Num + Div<Output = T>,
+{
+    type Output = Self;
+
+    fn div(self, scalar: T) -> Self {
+        Self {
+            x: self.x / scalar,
+            y: self.y / scalar,
         }
     }
 }
