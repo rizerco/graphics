@@ -153,6 +153,42 @@ impl Color {
         }
     }
 
+    /// Creates a colour from a hex code.
+    pub fn from_hex<S>(hex_code: S) -> Option<Self>
+    where
+        S: ToString,
+    {
+        let hex_code = hex_code.to_string();
+        let hex_code = hex_code.trim_start_matches("0x");
+        let hex_code = hex_code.trim_start_matches("#");
+        let mut hex_code = hex_code.to_string();
+
+        // Something like ‘FA0’ gets converted to ‘FFAA00’.
+        if hex_code.len() == 3 {
+            let first_character = hex_code.chars().nth(0).unwrap_or('0');
+            let second_character = hex_code.chars().nth(1).unwrap_or('0');
+            let third_character = hex_code.chars().nth(2).unwrap_or('0');
+            hex_code = format!(
+                "{}{}{}{}{}{}",
+                first_character,
+                first_character,
+                second_character,
+                second_character,
+                third_character,
+                third_character
+            );
+        }
+
+        if hex_code.len() <= 6 {
+            let Ok(value) = u32::from_str_radix(&hex_code, 16) else {
+                return None;
+            };
+            Some(Self::from_rgb_u32(value))
+        } else {
+            None
+        }
+    }
+
     /// Returns the hue of a colour, in the range 0 to 1.
     pub fn hue(&self) -> f32 {
         let values = vec![self.red, self.green, self.blue];
@@ -423,6 +459,54 @@ mod tests {
         assert_eq!(color.green, 0xf2);
         assert_eq!(color.blue, 0x31);
         assert_eq!(color.alpha, 0xff);
+    }
+
+    #[test]
+    fn from_six_character_hex() {
+        let color = Color::from_hex("D00DAD");
+        let expected_color = Color::from_rgb_u32(0xd00dad);
+
+        assert_eq!(color, Some(expected_color));
+    }
+
+    #[test]
+    fn from_six_character_hex_with_octothorpe() {
+        let color = Color::from_hex("#D00DAD");
+        let expected_color = Color::from_rgb_u32(0xd00dad);
+
+        assert_eq!(color, Some(expected_color));
+    }
+
+    #[test]
+    fn from_three_character_hex() {
+        let color = Color::from_hex("bed");
+        let expected_color = Color::from_rgb_u32(0xbbeedd);
+
+        assert_eq!(color, Some(expected_color));
+    }
+
+    #[test]
+    fn from_four_character_hex() {
+        let color = Color::from_hex("f00d");
+        let expected_color = Color::from_rgb_u32(0x00f00d);
+
+        assert_eq!(color, Some(expected_color));
+    }
+
+    #[test]
+    fn from_five_character_hex() {
+        let color = Color::from_hex("d000d");
+        let expected_color = Color::from_rgb_u32(0x0d000d);
+
+        assert_eq!(color, Some(expected_color));
+    }
+
+    #[test]
+    fn from_two_character_hex() {
+        let color = Color::from_hex("99");
+        let expected_color = Color::from_rgb_u32(0x000099);
+
+        assert_eq!(color, Some(expected_color));
     }
 
     #[test]
