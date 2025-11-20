@@ -8,7 +8,7 @@ pub type dssim_px_t = f32;
 
 #[link(name = "Accelerate", kind = "framework")]
 #[cfg(target_vendor = "apple")]
-extern "C" {
+unsafe extern "C" {
     /// Reorder color channels within the buffer according to the permute map.
     ///
     /// For each pixel in src, do the following:
