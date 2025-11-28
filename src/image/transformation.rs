@@ -62,6 +62,11 @@ impl Image {
 
     /// Resizes an image using the nearest neighbour algorithm.
     pub fn resize_nearest_neighbor(&mut self, new_size: Size<u32>) {
+        *self = self.resized_nearest_neighbor(new_size);
+    }
+
+    /// Returns a resized image using the nearest neighbour algorithm.
+    pub fn resized_nearest_neighbor(&self, new_size: Size<u32>) -> Image {
         let mut new_image = Image::empty(new_size);
 
         let x_scale = self.size.width as f32 / new_size.width as f32;
@@ -84,13 +89,20 @@ impl Image {
                 new_image.set_pixel_color(color, location);
             }
         }
-
-        *self = new_image;
+        new_image
     }
 
     /// Rotates the image using the nearest neighbour algorithm.
     /// Returns the offset for the new origin.
     pub fn rotate_nearest_neighbor(&mut self, angle: f32, center: Point<f32>) -> Point<i32> {
+        let (new_image, offset) = self.rotated_nearest_neighbor(angle, center);
+        *self = new_image;
+        offset.into()
+    }
+
+    /// Rotates the image using the nearest neighbour algorithm.
+    /// Returns the offset for the new origin.
+    pub fn rotated_nearest_neighbor(&self, angle: f32, center: Point<f32>) -> (Image, Point<i32>) {
         let bounds = Rect {
             origin: Point::zero(),
             size: self.size.into(),
@@ -122,8 +134,6 @@ impl Image {
             }
         }
 
-        *self = new_image;
-
-        offset.into()
+        (new_image, offset.into())
     }
 }

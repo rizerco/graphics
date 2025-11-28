@@ -1,14 +1,14 @@
-use std::borrow::Cow;
+use std::sync::Arc;
 
 use crate::{Image, Point, Rect};
 
 /// Defines a mask.
 #[derive(Debug, Clone, PartialEq)]
-pub enum Mask<'a> {
+pub enum Mask {
     /// A positioned mask.
-    Positioned(PositionedMask<'a>),
+    Positioned(PositionedMask),
     /// A tiled mask.
-    Tiled(TiledMask<'a>),
+    Tiled(TiledMask),
 }
 
 pub trait Flamble: Clone + std::fmt::Debug {}
@@ -23,25 +23,25 @@ pub trait BoundedMask {
 
 #[derive(Debug, Clone, PartialEq)]
 /// A mask image that is contained within a bounding box.
-pub struct PositionedMask<'a> {
+pub struct PositionedMask {
     /// The mask image.
-    pub image: Cow<'a, Image>,
+    pub image: Arc<Image>,
     /// The location at which to position the image on the canvas.
     pub origin: Point<i32>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 /// A mask image that is tiled across the canvas.
-pub struct TiledMask<'a> {
+pub struct TiledMask {
     /// The image that represents the mask.
-    pub image: Cow<'a, Image>,
+    pub image: Arc<Image>,
     /// The offset location from which to start the tile.
     pub offset: Point<i32>,
 }
 
 // MARK: Creation
 
-impl<'a> PositionedMask<'a> {
+impl PositionedMask {
     /// Creates a new bounded mask from an image and bounds.
     /// If the image size does not match the bounds, it will
     /// be resized.
@@ -51,13 +51,13 @@ impl<'a> PositionedMask<'a> {
             image.resize_nearest_neighbor(bounds.size.into());
         }
         Self {
-            image: Cow::Owned(image),
+            image: Arc::new(image),
             origin: bounds.origin,
         }
     }
 }
 
-impl<'a> BoundedMask for PositionedMask<'a> {
+impl BoundedMask for PositionedMask {
     /// Returns the bounding box, if applicable.
     fn bounding_box(&self) -> Rect<i32> {
         Rect {

@@ -17,7 +17,7 @@ pub struct Layer<'a> {
     /// The layer’s opacity.
     pub opacity: f32,
     /// The layer’s masks.
-    pub masks: Vec<Mask<'a>>,
+    pub masks: Vec<Mask>,
 }
 
 // MARK: Creation
@@ -110,7 +110,7 @@ impl<'a> Layer<'a> {
 
 #[cfg(test)]
 mod test {
-    use std::borrow::Cow;
+    use std::sync::Arc;
 
     use crate::{Color, Image, Mask, Point, PositionedMask, Size, TiledMask};
 
@@ -154,7 +154,7 @@ mod test {
             },
         );
         let mask = PositionedMask {
-            image: Cow::Borrowed(&image),
+            image: Arc::new(image),
             origin: Point { x: 2, y: 1 },
         };
         let mask = Mask::Positioned(mask);
@@ -190,7 +190,7 @@ mod test {
         image.set_pixel_color(Color::BLACK, Point { x: 1, y: 1 });
 
         let mask = TiledMask {
-            image: Cow::Borrowed(&image),
+            image: Arc::new(image),
             offset: Point { x: 1, y: 0 },
         };
         let mask = Mask::Tiled(mask);

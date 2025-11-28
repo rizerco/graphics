@@ -4,9 +4,9 @@ use rayon::prelude::*;
 
 use crate::{BlendMode, Color, Image, Mask, Point};
 
+use super::Layer;
 use super::blend::{self, RgbaColor};
 use super::operation::Operation;
-use super::Layer;
 
 /// Composites multiple images together and returns the result.
 pub fn composite(operation: &Operation) -> Image {
@@ -265,16 +265,16 @@ fn blend_colors(color: &mut Color, blend_color: &Color, blend_mode: BlendMode, o
 
 /// Options for compositing.
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct CompositeOperationOptions<'a> {
+pub struct CompositeOperationOptions {
     /// The blend mode.
     pub blend_mode: BlendMode,
     /// The masks.
-    pub masks: Vec<Mask<'a>>,
+    pub masks: Vec<Mask>,
 }
 
 #[cfg(test)]
 mod test {
-    use std::borrow::Cow;
+    use std::{borrow::Cow, sync::Arc};
 
     use crate::{Mask, Size, TiledMask};
 
@@ -339,7 +339,7 @@ mod test {
         image.set_pixel_color(Color::BLACK, Point { x: 1, y: 1 });
 
         let mask = TiledMask {
-            image: Cow::Borrowed(&image),
+            image: Arc::new(image),
             offset: Point { x: 1, y: 0 },
         };
         let mask = Mask::Tiled(mask);
@@ -387,7 +387,7 @@ mod test {
         image.set_pixel_color(Color::BLACK, Point { x: 1, y: 1 });
 
         let mask = TiledMask {
-            image: Cow::Borrowed(&image),
+            image: Arc::new(image),
             offset: Point { x: 0, y: 0 },
         };
         let mask = Mask::Tiled(mask);
