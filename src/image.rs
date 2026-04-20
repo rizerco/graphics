@@ -1,7 +1,7 @@
 use exif::{In, Tag};
 pub use mask_operations::*;
 use tiff::encoder::compression::Compression;
-use tiff::encoder::{colortype, TiffEncoder};
+use tiff::encoder::{TiffEncoder, colortype};
 
 use std::cmp::min;
 use std::io::Cursor;
@@ -10,7 +10,7 @@ use std::path::Path;
 use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use crate::composite::{self, Layer};
-use crate::error::ImageError;
+use crate::error::{ImageError, TrimError};
 use crate::{BlendMode, Color, Mask, Point, PositionedMask, Rect, Size};
 pub use constraints::ImageConstraints;
 
@@ -356,7 +356,7 @@ impl Image {
 impl Image {
     /// Trims the transparent pixels from the edge of the image and returns
     /// the new bounding rect relative to the original.
-    pub fn trim(&mut self) -> anyhow::Result<Rect<i32>> {
+    pub fn trim(&mut self) -> Result<Rect<i32>, TrimError> {
         let container = Rect {
             origin: Point::zero(),
             size: self.size.into(),
@@ -366,7 +366,7 @@ impl Image {
 
     /// Trims the transparent pixels from the edge of the image and returns
     /// the new bounding rect relative to the original.
-    pub fn trim_in_container(&mut self, container: Rect<i32>) -> anyhow::Result<Rect<i32>> {
+    pub fn trim_in_container(&mut self, container: Rect<i32>) -> Result<Rect<i32>, TrimError> {
         let bytes_per_row = self.bytes_per_row as i32;
         let image_size = Size {
             width: self.size.width as i32,
@@ -377,7 +377,7 @@ impl Image {
                 origin: Point::zero(),
                 size: image_size,
             })
-            .ok_or(anyhow::anyhow!("Container is outside of the image bounds."))?;
+            .ok_or(anyhow::anyhow!(TrimError::OutOfBounds))?;
 
         let min_x = container.min_x();
         let max_x = container.max_x();
@@ -414,7 +414,7 @@ impl Image {
         }
 
         if top >= max_y {
-            anyhow::bail!("The found top is greater than the max Y.");
+            return Err(TrimError::FullyTransparent);
         }
 
         // Search from the bottom.
@@ -445,11 +445,7 @@ impl Image {
         }
 
         if bottom <= top {
-            anyhow::bail!(
-                "The found bottom ({}) is less than the found top ({}).",
-                bottom,
-                top
-            );
+            return Err(TrimError::FullyTransparent);
         }
 
         // Search from the left.
@@ -480,7 +476,7 @@ impl Image {
         }
 
         if left >= max_x {
-            anyhow::bail!("The found left edge is greater than the maximum x.");
+            return Err(TrimError::FullyTransparent);
         }
 
         // Search from the right.
@@ -511,7 +507,7 @@ impl Image {
         }
 
         if right <= left {
-            anyhow::bail!("The found right edge is greater than the found left edge.");
+            return Err(TrimError::FullyTransparent);
         }
 
         let size = Size {
