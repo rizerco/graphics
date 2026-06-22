@@ -1,6 +1,6 @@
 use core::ops::Add;
 use num_traits::{Float, Num, One, Zero};
-use std::ops::Mul;
+use std::ops::{AddAssign, Mul};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Deserialize, serde::Serialize)]
 /// Represents a size.
@@ -88,6 +88,16 @@ where
             width: self.width + rhs.width,
             height: self.height + rhs.height,
         }
+    }
+}
+
+impl<T> AddAssign for Size<T>
+where
+    T: Num + AddAssign,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        self.width += rhs.width;
+        self.height += rhs.height;
     }
 }
 
