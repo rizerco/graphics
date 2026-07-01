@@ -49,7 +49,7 @@ mod tests {
                 &image.data,
                 image.size.width,
                 image.size.height,
-                image::ColorType::Rgba8,
+                image::ExtendedColorType::Rgba8,
             )
             .unwrap();
         // let png_data = image.file_data(ImageFormat::Png).unwrap();
@@ -77,14 +77,11 @@ mod tests {
 
         let now = std::time::Instant::now();
         let mut file = File::create("/tmp/0_lzw.tiff").unwrap();
-        let mut tiff = TiffEncoder::new(&mut file).unwrap();
-        tiff.write_image_with_compression::<RGBA8, _>(
-            image.size.width,
-            image.size.height,
-            compression::Lzw,
-            &image.data,
-        )
-        .unwrap();
+        let mut tiff = TiffEncoder::new(&mut file)
+            .unwrap()
+            .with_compression(Compression::Lzw);
+        tiff.write_image::<RGBA8>(image.size.width, image.size.height, &image.data)
+            .unwrap();
         println!("encode lzw: {:.2?}", now.elapsed());
         let now = std::time::Instant::now();
         _ = Image::open("/tmp/0_lzw.tiff").unwrap();
@@ -92,14 +89,11 @@ mod tests {
 
         let now = std::time::Instant::now();
         let mut file = File::create("/tmp/0_unc.tiff").unwrap();
-        let mut tiff = TiffEncoder::new(&mut file).unwrap();
-        tiff.write_image_with_compression::<RGBA8, _>(
-            image.size.width,
-            image.size.height,
-            compression::Uncompressed,
-            &image.data,
-        )
-        .unwrap();
+        let mut tiff = TiffEncoder::new(&mut file)
+            .unwrap()
+            .with_compression(Compression::Uncompressed);
+        tiff.write_image::<RGBA8>(image.size.width, image.size.height, &image.data)
+            .unwrap();
         println!("encode unc: {:.2?}", now.elapsed());
         let now = std::time::Instant::now();
         _ = Image::open("/tmp/0_unc.tiff").unwrap();
@@ -107,14 +101,11 @@ mod tests {
 
         let now = std::time::Instant::now();
         let mut file = File::create("/tmp/0_pac.tiff").unwrap();
-        let mut tiff = TiffEncoder::new(&mut file).unwrap();
-        tiff.write_image_with_compression::<RGBA8, _>(
-            image.size.width,
-            image.size.height,
-            compression::Packbits,
-            &image.data,
-        )
-        .unwrap();
+        let mut tiff = TiffEncoder::new(&mut file)
+            .unwrap()
+            .with_compression(Compression::Packbits);
+        tiff.write_image::<RGBA8>(image.size.width, image.size.height, &image.data)
+            .unwrap();
         println!("encode pac: {:.2?}", now.elapsed());
         let now = std::time::Instant::now();
         _ = Image::open("/tmp/0_pac.tiff").unwrap();

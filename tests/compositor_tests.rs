@@ -661,8 +661,8 @@ fn composite_resized_image() {
 
     composite::draw_layer_over_image(&mut image, &layer);
 
-    // image.save("/tmp/composite-resized.png").unwrap();
+    // image.save("/tmp/composite-resized.webp").unwrap();
 
-    let expected_image = Image::open("tests/images/composite-resized.png").unwrap();
+    let expected_image = Image::open("tests/images/composite-resized.webp").unwrap();
     assert!(image.appears_equal_to(&expected_image));
 }

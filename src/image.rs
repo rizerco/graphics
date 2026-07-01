@@ -166,20 +166,12 @@ impl Image {
 
     /// Outputs data for the image using the TIFF format.
     /// This allows for the compression algorithm to be set.
-    pub fn tiff_data<D>(&self, compression: D) -> anyhow::Result<Vec<u8>>
-    where
-        D: Compression,
-    {
+    pub fn tiff_data(&self, compression: tiff::encoder::Compression) -> anyhow::Result<Vec<u8>> {
         let mut buffer = Vec::new();
         let mut cursor = Cursor::new(&mut buffer);
 
-        let mut tiff = TiffEncoder::new(&mut cursor)?;
-        tiff.write_image_with_compression::<colortype::RGBA8, _>(
-            self.size.width,
-            self.size.height,
-            compression,
-            &self.data,
-        )?;
+        let mut tiff = TiffEncoder::new(&mut cursor)?.with_compression(compression);
+        tiff.write_image::<colortype::RGBA8>(self.size.width, self.size.height, &self.data)?;
 
         Ok(buffer)
     }

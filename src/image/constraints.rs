@@ -1,6 +1,7 @@
 use crate::Size;
 
 /// Constraints on an image’s size.
+#[derive(Clone, Debug, Default)]
 pub struct ImageConstraints {
     /// The maximum size of an image.
     pub maximum_size: Option<Size<u32>>,
