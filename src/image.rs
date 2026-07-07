@@ -1,6 +1,5 @@
 use exif::{In, Tag};
 pub use mask_operations::*;
-use tiff::encoder::compression::Compression;
 use tiff::encoder::{TiffEncoder, colortype};
 
 use std::cmp::min;
@@ -11,7 +10,7 @@ use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use crate::composite::{self, Layer};
 use crate::error::{ImageError, TrimError};
-use crate::{BlendMode, Color, Mask, Point, PositionedMask, Rect, Size};
+use crate::{BlendMode, Color, Point, PositionedMask, Rect, Size};
 pub use constraints::ImageConstraints;
 
 mod colors;
@@ -24,7 +23,7 @@ pub mod transformation;
 mod zlib;
 
 /// The representation of an image for graphics manipulation.
-#[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
 pub struct Image {
     /// The raw image data.
     #[serde(with = "serde_bytes")]
