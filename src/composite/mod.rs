@@ -3,6 +3,7 @@ mod compositor;
 mod layer;
 mod operation;
 
+pub use blend::*;
 pub use compositor::*;
 pub use layer::*;
 pub use operation::*;

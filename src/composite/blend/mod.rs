@@ -1,8 +1,8 @@
 mod rgb_color;
 mod rgba_color;
 
-pub use rgb_color::RgbColor;
-pub use rgba_color::RgbaColor;
+pub use rgb_color::*;
+pub use rgba_color::*;
 
 /// The sRGB gamma values.
 const GAMMA_VALUES: RgbColor = RgbColor {

@@ -274,7 +274,7 @@ pub struct CompositeOperationOptions {
 
 #[cfg(test)]
 mod test {
-    use std::{borrow::Cow, sync::Arc};
+    use std::sync::Arc;
 
     use crate::{Mask, Size, TiledMask};
 

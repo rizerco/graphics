@@ -1,5 +1,3 @@
-use num_traits::Float;
-
 /// Defines a colour in the RGBA format.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Deserialize, serde::Serialize)]
 pub struct Color {
