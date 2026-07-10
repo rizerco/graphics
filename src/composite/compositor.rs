@@ -182,7 +182,6 @@ fn pixel_data(source: &[u8], offset: usize) -> [u8; 4] {
         .get(offset..(offset + 4))
         .and_then(|data| data.try_into().ok())
         .unwrap_or([u8::MAX, 0, 0, u8::MAX])
-    // .unwrap_or_default()
 }
 
 /// Blends one colour with another.
@@ -276,7 +275,7 @@ pub struct CompositeOperationOptions {
 mod test {
     use std::sync::Arc;
 
-    use crate::{Mask, Size, TiledMask};
+    use crate::{Mask, PositionedMask, Size, TiledMask};
 
     use super::*;
 
@@ -401,6 +400,52 @@ mod test {
         base_image.save("/tmp/tiled_mask_negative.png").unwrap();
 
         let expected_image = Image::open("tests/images/tiled_mask_negative.png").unwrap();
+
+        assert!(base_image.appears_equal_to(&expected_image));
+    }
+
+    #[test]
+    fn draw_layer_with_positioned_mask() {
+        let mut base_image = Image::color(
+            &Color::from_rgb_u32(0x639bff),
+            Size {
+                width: 16,
+                height: 8,
+            },
+        );
+        let image = Image::color(
+            &Color::from_rgb_u32(0xcbdbfc),
+            Size {
+                width: 13,
+                height: 6,
+            },
+        );
+        let position = Point { x: 3.0, y: 1.0 };
+        let mut layer = Layer::new(&image, position);
+
+        // Setting up a mask image.
+        let mut image = Image::color(
+            &Color::BLACK,
+            Size {
+                width: 7,
+                height: 4,
+            },
+        );
+        image.set_pixel_color(Color::CLEAR, Point::zero());
+        image.set_pixel_color(Color::CLEAR, Point { x: 1, y: 1 });
+
+        let mask = PositionedMask {
+            image: Arc::new(image),
+            origin: Point { x: 3, y: 2 },
+        };
+        let mask = Mask::Positioned(mask);
+        layer.masks = vec![mask];
+
+        draw_layer_over_image(&mut base_image, &layer);
+
+        base_image.save("/tmp/positioned_mask.png").unwrap();
+
+        let expected_image = Image::open("tests/images/positioned_mask.png").unwrap();
 
         assert!(base_image.appears_equal_to(&expected_image));
     }

@@ -1,6 +1,6 @@
 use std::{cmp, ops::AddAssign};
 
-use num_traits::{abs, Float, Num, PrimInt, Signed, Zero};
+use num_traits::{Float, Num, PrimInt, Signed, Zero, abs};
 
 use crate::{EdgeInsets, Point, Size};
 
@@ -421,8 +421,8 @@ where
     pub fn contains(&self, point: Point<T>) -> bool {
         point.x >= self.min_x()
             && point.y >= self.min_y()
-            && point.x <= self.max_x()
-            && point.y <= self.max_y()
+            && point.x < self.max_x()
+            && point.y < self.max_y()
     }
 
     /// Returns whether or not another rectangle is fully contained inside

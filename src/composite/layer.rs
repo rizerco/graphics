@@ -62,7 +62,13 @@ impl<'a> Layer<'a> {
     pub fn mask_alpha(&self, location: Point<u32>) -> u8 {
         let mut result = u8::MAX;
 
-        let mut location = location.into();
+        let mut location: Point<i32> = location.into();
+        if self.position.x >= 0.0 {
+            location.x += self.position.x as i32;
+        }
+        if self.position.y >= 0.0 {
+            location.y += self.position.y as i32;
+        }
         for mask in self.masks.iter() {
             let color = match mask {
                 Mask::Positioned(positioned_mask) => {
@@ -70,12 +76,6 @@ impl<'a> Layer<'a> {
                     positioned_mask.image.pixel_color(location)
                 }
                 Mask::Tiled(tiled_mask) => {
-                    if self.position.x >= 0.0 {
-                        location.x += self.position.x as i32;
-                    }
-                    if self.position.y >= 0.0 {
-                        location.y += self.position.y as i32;
-                    }
                     location -= tiled_mask.offset;
                     let width = tiled_mask.image.size.width as i32;
                     let height = tiled_mask.image.size.height as i32;
@@ -155,16 +155,28 @@ mod test {
         );
         let mask = PositionedMask {
             image: Arc::new(image),
-            origin: Point { x: 2, y: 1 },
+            origin: Point { x: 2, y: 6 },
         };
         let mask = Mask::Positioned(mask);
         layer.masks = vec![mask];
 
-        let location = Point { x: 4, y: 3 };
+        let location = Point { x: 0, y: 0 };
+        let alpha = layer.mask_alpha(location);
+        assert_eq!(alpha, 0);
+
+        let location = Point { x: 0, y: 1 };
         let alpha = layer.mask_alpha(location);
         assert_eq!(alpha, u8::MAX);
 
-        let location = Point { x: 0, y: 0 };
+        let location = Point { x: 2, y: 3 };
+        let alpha = layer.mask_alpha(location);
+        assert_eq!(alpha, u8::MAX);
+
+        let location = Point { x: 3, y: 3 };
+        let alpha = layer.mask_alpha(location);
+        assert_eq!(alpha, 0);
+
+        let location = Point { x: 0, y: 4 };
         let alpha = layer.mask_alpha(location);
         assert_eq!(alpha, 0);
     }

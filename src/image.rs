@@ -300,7 +300,7 @@ impl Image {
 
         let offset = self.bytes_per_row as usize * location.y as usize + location.x as usize * 4;
 
-        if self.data.len() < offset + 4 {
+        if offset + 3 >= self.data.len() {
             return None;
         }
 
@@ -611,5 +611,32 @@ impl Image {
             bytes_per_row,
         };
         Ok(image)
+    }
+}
+
+// MARK: Tests
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::Color;
+
+    #[test]
+    fn pixel_color_at_edge() {
+        let color = Color::from_rgba_u32(0x6495ed);
+        let image = Image::color(
+            &color,
+            Size {
+                width: 7,
+                height: 3,
+            },
+        );
+        let sampled_color = image.pixel_color(Point { x: 6, y: 2 });
+        assert_eq!(sampled_color, Some(color));
+
+        let sampled_color = image.pixel_color(Point { x: 0, y: 3 });
+        assert_eq!(sampled_color, None);
+        let sampled_color = image.pixel_color(Point { x: 7, y: 2 });
+        assert_eq!(sampled_color, None);
     }
 }
