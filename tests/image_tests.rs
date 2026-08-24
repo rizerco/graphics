@@ -22,6 +22,12 @@ mod tests {
     }
 
     #[test]
+    fn open_jpeg() {
+        let image = Image::open("tests/images/gerbil.jpg");
+        assert!(image.is_ok())
+    }
+
+    #[test]
     #[ignore]
     fn performance_tests() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

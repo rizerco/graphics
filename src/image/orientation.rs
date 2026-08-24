@@ -1,4 +1,4 @@
-use image::{imageops, RgbaImage};
+use image::{RgbaImage, imageops};
 
 /// Fixes the orientation of an image.
 pub(super) fn fix_orientation(image: &mut RgbaImage, orientation: u32) {
