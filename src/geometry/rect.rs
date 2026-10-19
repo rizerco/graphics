@@ -159,7 +159,7 @@ where
 
 impl<T> Rect<T>
 where
-    T: Num + Float + AddAssign,
+    T: Num + Float + AddAssign + std::fmt::Debug,
 {
     /// Creates a rectangle containing two points.
     pub fn containing_float(point_a: Point<T>, point_b: Point<T>) -> Self {

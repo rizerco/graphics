@@ -123,14 +123,15 @@ impl Image {
         for y in 0..new_image.size.height {
             for x in 0..new_image.size.width {
                 let location = Point { x, y };
-                let rotated_location: Point<f32> = location.into();
-                let rotated_location = rotated_location + Point { x: 0.5, y: 0.5 };
-                let rotated_location = rotated_location.rotated(-angle, center);
+                let mut rotated_location: Point<f32> = location.into();
+                rotated_location = rotated_location - offset;
+                rotated_location = rotated_location + Point { x: 0.5, y: 0.5 };
+                rotated_location = rotated_location.rotated(-angle, center);
                 let rotated_location = rotated_location.floored();
                 let Some(color) = self.pixel_color(rotated_location) else {
                     continue;
                 };
-                new_image.set_pixel_color(color, location + offset.into());
+                new_image.set_pixel_color(color, location);
             }
         }
 

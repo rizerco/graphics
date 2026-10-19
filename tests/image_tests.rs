@@ -421,6 +421,27 @@ mod tests {
     }
 
     #[test]
+    fn test_10x4_rotated() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("tests/images/10x4.png");
+        let mut image = Image::open(path).unwrap();
+
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("tests/images/10x4-rotated.png");
+        let expected_image = Image::open(path).unwrap();
+
+        let midpoint = Point {
+            x: image.size.width as f32 * 0.5,
+            y: image.size.height as f32 * 0.5,
+        };
+        let midpoint = midpoint.floored().into();
+        image.rotate_nearest_neighbor(std::f32::consts::PI * 0.5, midpoint);
+
+        image.save("/tmp/10x4-rotated.png").unwrap();
+        assert!(image.appears_equal_to(&expected_image));
+    }
+
+    #[test]
     fn fix_orientation() {
         let path = PathBuf::from("tests/images/orientation/f1t.jpg");
         let base_image = Image::open(path).unwrap();
