@@ -2,7 +2,9 @@ use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign};
 
 use num_traits::{Float, Num, Zero};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize,
+)]
 /// Represents a 2D point.
 pub struct Point<T: Num> {
     /// The x-ccordinate.
