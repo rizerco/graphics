@@ -51,9 +51,9 @@ impl<T: Num + Copy + Zero> EdgeInsets<T> {
 impl<T: Float> EdgeInsets<T> {
     /// Rounds all of the insets to integer values.
     pub fn round(&mut self) {
-        self.top.round();
-        self.bottom.round();
-        self.left.round();
-        self.right.round();
+        self.top = self.top.round();
+        self.bottom = self.bottom.round();
+        self.left = self.left.round();
+        self.right = self.right.round();
     }
 }
